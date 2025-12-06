@@ -41,7 +41,7 @@ click==8.3.1
 code-annotations==2.3.0
     # via edx-toggles
 confluent-kafka[avro,schema-registry]==2.12.2
-    # via -r requirements/base.in
+    # via -r base.in
 cryptography==46.0.3
     # via
     #   authlib
@@ -52,8 +52,8 @@ defusedxml==0.7.1
     #   social-auth-core
 django==5.2.8
     # via
-    #   -c requirements/common_constraints.txt
-    #   -r requirements/base.in
+    #   -c common_constraints.txt
+    #   -r base.in
     #   django-clearcache
     #   django-cors-headers
     #   django-crum
@@ -78,9 +78,9 @@ django==5.2.8
     #   openedx-ledger
     #   social-auth-app-django
 django-clearcache==1.2.1
-    # via -r requirements/base.in
+    # via -r base.in
 django-cors-headers==4.9.0
-    # via -r requirements/base.in
+    # via -r base.in
 django-crum==0.7.9
     # via
     #   edx-django-utils
@@ -88,38 +88,38 @@ django-crum==0.7.9
     #   edx-toggles
 django-extensions==4.1
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   openedx-ledger
 django-filter==25.2
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   openedx-ledger
 django-log-request-id==2.1.0
-    # via -r requirements/base.in
+    # via -r base.in
 django-model-utils==5.0.0
     # via edx-rbac
 django-object-actions==5.0.0
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   openedx-ledger
 django-simple-history==3.4.0
     # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/base.in
+    #   -c constraints.txt
+    #   -r base.in
     #   openedx-ledger
 django-waffle==5.0.0
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-toggles
 djangoql==0.18.1
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   openedx-ledger
 djangorestframework==3.16.1
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   drf-jwt
     #   drf-spectacular
     #   drf-yasg
@@ -129,20 +129,20 @@ dnspython==2.8.0
 drf-jwt==1.19.2
     # via edx-drf-extensions
 drf-spectacular==0.29.0
-    # via -r requirements/base.in
+    # via -r base.in
 drf-yasg==1.21.11
-    # via -r requirements/base.in
+    # via -r base.in
 edx-auth-backends==4.6.2
-    # via -r requirements/base.in
+    # via -r base.in
 edx-ccx-keys==2.0.2
     # via openedx-events
 edx-django-release-util==1.5.0
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   openedx-ledger
 edx-django-utils==8.0.1
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   edx-auth-backends
     #   edx-drf-extensions
     #   edx-event-bus-kafka
@@ -153,10 +153,10 @@ edx-django-utils==8.0.1
     #   openedx-ledger
 edx-drf-extensions==10.6.0
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   edx-rbac
 edx-event-bus-kafka==6.1.0
-    # via -r requirements/base.in
+    # via -r base.in
 edx-opaque-keys[django]==3.0.0
     # via
     #   edx-ccx-keys
@@ -164,10 +164,10 @@ edx-opaque-keys[django]==3.0.0
     #   openedx-events
 edx-rbac==2.1.0
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   openedx-ledger
 edx-rest-api-client==6.2.0
-    # via -r requirements/base.in
+    # via -r base.in
 edx-toggles==5.4.1
     # via
     #   edx-auth-backends
@@ -177,7 +177,7 @@ fastavro==1.12.1
     #   confluent-kafka
     #   openedx-events
 getsmarter-api-clients==0.6.3
-    # via -r requirements/base.in
+    # via -r base.in
 h11==0.16.0
     # via httpcore
 httpcore==1.0.9
@@ -197,7 +197,7 @@ jinja2==3.1.6
     # via code-annotations
 jsonfield2==4.0.0.post0
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   openedx-ledger
 jsonschema==4.25.1
     # via drf-spectacular
@@ -207,7 +207,7 @@ markupsafe==3.0.3
     # via jinja2
 mysqlclient==2.2.7
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   openedx-ledger
 oauthlib==3.3.1
     # via
@@ -216,11 +216,11 @@ oauthlib==3.3.1
     #   social-auth-core
 openedx-events==10.5.0
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   edx-event-bus-kafka
     #   openedx-ledger
 openedx-ledger==1.6.15
-    # via -r requirements/base.in
+    # via -r base.in
 packaging==25.0
     # via drf-yasg
 ply==3.11
@@ -237,13 +237,13 @@ pyjwt[crypto]==2.10.1
     #   edx-rest-api-client
     #   social-auth-core
 pymemcache==4.0.0
-    # via -r requirements/base.in
+    # via -r base.in
 pymongo==4.15.4
     # via edx-opaque-keys
 pynacl==1.6.1
     # via edx-django-utils
 python-dateutil==2.9.0.post0
-    # via -r requirements/base.in
+    # via -r base.in
 python-slugify==8.0.4
     # via code-annotations
 python3-openid==3.2.0
@@ -282,7 +282,7 @@ rpds-py==0.30.0
     #   referencing
 rules==3.5
     # via
-    #   -r requirements/base.in
+    #   -r base.in
     #   openedx-ledger
 semantic-version==2.10.0
     # via edx-drf-extensions
@@ -317,7 +317,7 @@ uritemplate==4.2.0
     # via
     #   drf-spectacular
     #   drf-yasg
-urllib3==2.5.0
+urllib3==2.6.0
     # via requests
 
 # The following packages are considered to be unsafe in a requirements file:
