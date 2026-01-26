@@ -20,7 +20,7 @@ authlib==1.6.6
     # via confluent-kafka
 avro==1.12.1
     # via confluent-kafka
-cachetools==6.2.4
+cachetools==6.2.5
     # via confluent-kafka
 certifi==2026.1.4
     # via
@@ -113,7 +113,7 @@ django-waffle==5.0.0
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-toggles
-djangoql==0.18.1
+djangoql==0.18.2
     # via
     #   -r requirements/base.in
     #   openedx-ledger
@@ -221,13 +221,13 @@ openedx-events==10.5.0
     #   openedx-ledger
 openedx-ledger==1.6.15
     # via -r requirements/base.in
-packaging==25.0
+packaging==26.0
     # via drf-yasg
 ply==3.11
     # via djangoql
 psutil==7.2.1
     # via edx-django-utils
-pycparser==2.23
+pycparser==3.0
     # via cffi
 pyjwt[crypto]==2.10.1
     # via
