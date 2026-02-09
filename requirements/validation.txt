@@ -9,13 +9,13 @@ anyio==4.12.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   httpx
-asgiref==3.11.0
+asgiref==3.11.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   django
     #   django-cors-headers
-astroid==4.0.3
+astroid==4.0.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -29,7 +29,7 @@ attrs==25.4.0
     #   jsonschema
     #   openedx-events
     #   referencing
-authlib==1.6.6
+authlib==1.6.7
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -39,7 +39,7 @@ avro==1.12.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   confluent-kafka
-cachetools==6.2.4
+cachetools==7.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -97,12 +97,12 @@ confluent-kafka[avro,schema-registry]==2.13.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-coverage[toml]==7.13.1
+coverage[toml]==7.13.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==46.0.3
+cryptography==46.0.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -129,7 +129,7 @@ distlib==0.4.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   virtualenv
-django==5.2.10
+django==5.2.11
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -215,7 +215,7 @@ django-waffle==5.0.0
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-toggles
-djangoql==0.18.1
+djangoql==0.19.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -315,7 +315,7 @@ factory-boy==3.3.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-faker==40.1.2
+faker==40.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -351,7 +351,7 @@ httpx==0.28.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   confluent-kafka
-id==1.5.0
+id==1.6.1
     # via
     #   -r requirements/quality.txt
     #   twine
@@ -468,11 +468,11 @@ openedx-events==10.5.0
     #   -r requirements/test.txt
     #   edx-event-bus-kafka
     #   openedx-ledger
-openedx-ledger==1.6.15
+openedx-ledger==1.7.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-packaging==25.0
+packaging==26.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -500,14 +500,14 @@ ply==3.11
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   djangoql
-psutil==7.2.1
+psutil==7.2.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-django-utils
 pycodestyle==2.14.0
     # via -r requirements/quality.txt
-pycparser==2.23
+pycparser==3.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -521,7 +521,7 @@ pygments==2.19.2
     #   pytest
     #   readme-renderer
     #   rich
-pyjwt[crypto]==2.10.1
+pyjwt[crypto]==2.11.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -639,7 +639,6 @@ requests==2.32.5
     #   confluent-kafka
     #   edx-drf-extensions
     #   edx-rest-api-client
-    #   id
     #   requests-oauthlib
     #   requests-toolbelt
     #   responses
@@ -663,7 +662,7 @@ rfc3986==2.0.0
     # via
     #   -r requirements/quality.txt
     #   twine
-rich==14.2.0
+rich==14.3.2
     # via
     #   -r requirements/quality.txt
     #   twine
@@ -758,6 +757,7 @@ urllib3==2.6.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
+    #   id
     #   requests
     #   responses
     #   twine
