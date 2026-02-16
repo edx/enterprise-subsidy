@@ -16,11 +16,11 @@ attrs==25.4.0
     #   jsonschema
     #   openedx-events
     #   referencing
-authlib==1.6.7
+authlib==1.6.8
     # via confluent-kafka
 avro==1.12.1
     # via confluent-kafka
-cachetools==7.0.0
+cachetools==7.0.1
     # via confluent-kafka
 certifi==2026.1.4
     # via
@@ -42,7 +42,7 @@ code-annotations==2.3.0
     # via edx-toggles
 confluent-kafka[avro,schema-registry]==2.13.0
     # via -r requirements/base.in
-cryptography==46.0.4
+cryptography==46.0.5
     # via
     #   authlib
     #   pyjwt
@@ -205,7 +205,7 @@ jsonschema-specifications==2025.9.1
     # via jsonschema
 markupsafe==3.0.3
     # via jinja2
-mysqlclient==2.2.7
+mysqlclient==2.2.8
     # via
     #   -r requirements/base.in
     #   openedx-ledger
@@ -259,7 +259,7 @@ pyyaml==6.0.3
     #   drf-spectacular
     #   drf-yasg
     #   edx-django-release-util
-redis==7.1.0
+redis==7.1.1
     # via openedx-ledger
 referencing==0.37.0
     # via
@@ -295,7 +295,7 @@ six==1.17.0
     #   python-dateutil
 social-auth-app-django==5.7.0
     # via edx-auth-backends
-social-auth-core==4.8.3
+social-auth-core==4.8.5
     # via
     #   edx-auth-backends
     #   social-auth-app-django
