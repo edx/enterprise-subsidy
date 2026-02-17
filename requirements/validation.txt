@@ -29,7 +29,7 @@ attrs==25.4.0
     #   jsonschema
     #   openedx-events
     #   referencing
-authlib==1.6.7
+authlib==1.6.8
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -39,7 +39,7 @@ avro==1.12.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   confluent-kafka
-cachetools==7.0.0
+cachetools==7.0.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -97,12 +97,12 @@ confluent-kafka[avro,schema-registry]==2.13.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-coverage[toml]==7.13.3
+coverage[toml]==7.13.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==46.0.4
+cryptography==46.0.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -326,7 +326,7 @@ fastavro==1.12.1
     #   -r requirements/test.txt
     #   confluent-kafka
     #   openedx-events
-filelock==3.20.3
+filelock==3.24.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -446,12 +446,12 @@ more-itertools==10.8.0
     #   -r requirements/quality.txt
     #   jaraco-classes
     #   jaraco-functools
-mysqlclient==2.2.7
+mysqlclient==2.2.8
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   openedx-ledger
-nh3==0.3.2
+nh3==0.3.3
     # via
     #   -r requirements/quality.txt
     #   readme-renderer
@@ -481,7 +481,7 @@ packaging==26.0
     #   pytest
     #   tox
     #   twine
-platformdirs==4.5.1
+platformdirs==4.9.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -583,7 +583,7 @@ pytest-cov==7.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-pytest-django==4.11.1
+pytest-django==4.12.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -621,7 +621,7 @@ readme-renderer==44.0
     # via
     #   -r requirements/quality.txt
     #   twine
-redis==7.1.0
+redis==7.1.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -705,7 +705,7 @@ social-auth-app-django==5.7.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-auth-backends
-social-auth-core==4.8.3
+social-auth-core==4.8.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -733,7 +733,7 @@ tomlkit==0.14.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-tox==4.34.1
+tox==4.36.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
