@@ -99,6 +99,17 @@ tx
 # pyenv
 .python-version
 
+# claude code personalization
+.claude/settings.local.json
+
+# Ralph
+.ralph/.*
+.ralph/status.json
+.ralph/progress.json
+.ralph/specs/
+.ralph/logs
+.ralph/live.log
+
 # doc spew
 docs/enterprise_subsidy.apps.*
 docs/enterprise_subsidy.rst

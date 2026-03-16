@@ -3,13 +3,17 @@ branch = True
 data_file = .coverage
 source=enterprise-subsidy
 omit =
-    enterprise_subsidy/settings*
-    enterprise_subsidy/conf*
-    *wsgi.py
-    *migrations*
-    *admin.py
-    *static*
-    *templates*
+    enterprise_subsidy/settings/*
+    enterprise_subsidy/conf/*
+    */mocks.py
+    */urls.py
+    */wsgi.py
+    */migrations/*
+    */admin.py
+    */static/*
+    */templates/*
+    */tests/*
+    test_*
 
 [html]
 directory = build/coverage/html
