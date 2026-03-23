@@ -10,7 +10,7 @@ asgiref==3.11.1
     # via
     #   django
     #   django-cors-headers
-attrs==25.4.0
+attrs==26.1.0
     # via
     #   confluent-kafka
     #   jsonschema
@@ -117,7 +117,7 @@ djangoql==0.19.1
     # via
     #   -r requirements/base.in
     #   openedx-ledger
-djangorestframework==3.16.1
+djangorestframework==3.17.0
     # via
     #   -r requirements/base.in
     #   drf-jwt
