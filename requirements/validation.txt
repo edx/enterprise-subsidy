@@ -4,7 +4,7 @@
 #
 #    make upgrade
 #
-anyio==4.12.1
+anyio==4.13.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -97,7 +97,7 @@ coverage[toml]==7.13.5
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==46.0.5
+cryptography==46.0.6
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -215,7 +215,7 @@ djangoql==0.19.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   openedx-ledger
-djangorestframework==3.17.0
+djangorestframework==3.17.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -310,7 +310,7 @@ factory-boy==3.3.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-faker==40.11.0
+faker==40.11.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -447,7 +447,7 @@ mysqlclient==2.2.8
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   openedx-ledger
-nh3==0.3.3
+nh3==0.3.4
     # via
     #   -r requirements/quality.txt
     #   readme-renderer
@@ -458,7 +458,7 @@ oauthlib==3.3.1
     #   getsmarter-api-clients
     #   requests-oauthlib
     #   social-auth-core
-openedx-events==10.5.0
+openedx-events==11.1.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -511,7 +511,7 @@ pycparser==3.0
     #   cffi
 pydocstyle==6.3.0
     # via -r requirements/quality.txt
-pygments==2.19.2
+pygments==2.20.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -588,10 +588,11 @@ python-dateutil==2.9.0.post0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-python-discovery==1.2.0
+python-discovery==1.2.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
+    #   tox
     #   virtualenv
 python-slugify==8.0.4
     # via
@@ -623,7 +624,7 @@ readme-renderer==44.0
     # via
     #   -r requirements/quality.txt
     #   twine
-redis==7.3.0
+redis==7.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -634,7 +635,7 @@ referencing==0.37.0
     #   -r requirements/test.txt
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.5
+requests==2.33.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -740,7 +741,7 @@ tomlkit==0.14.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-tox==4.50.3
+tox==4.51.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
