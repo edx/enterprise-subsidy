@@ -32,17 +32,17 @@ cffi==2.0.0
     # via
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.6
+charset-normalizer==3.4.7
     # via requests
-click==8.3.1
+click==8.3.2
     # via
     #   code-annotations
     #   edx-django-utils
 code-annotations==3.0.0
     # via edx-toggles
-confluent-kafka[avro,schema-registry]==2.13.2
+confluent-kafka[avro,schema-registry]==2.14.0
     # via -r requirements/base.in
-cryptography==46.0.6
+cryptography==46.0.7
     # via
     #   authlib
     #   pyjwt
@@ -50,7 +50,7 @@ defusedxml==0.7.1
     # via
     #   python3-openid
     #   social-auth-core
-django==5.2.12
+django==5.2.13
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.in
@@ -157,7 +157,7 @@ edx-drf-extensions==10.6.0
     #   edx-rbac
 edx-event-bus-kafka==6.1.0
     # via -r requirements/base.in
-edx-opaque-keys[django]==3.1.0
+edx-opaque-keys[django]==4.0.0
     # via
     #   edx-ccx-keys
     #   edx-drf-extensions
@@ -166,9 +166,9 @@ edx-rbac==3.0.0
     # via
     #   -r requirements/base.in
     #   openedx-ledger
-edx-rest-api-client==6.2.0
+edx-rest-api-client==7.0.0
     # via -r requirements/base.in
-edx-toggles==5.4.1
+edx-toggles==6.0.0
     # via
     #   edx-auth-backends
     #   edx-event-bus-kafka
@@ -265,7 +265,7 @@ referencing==0.37.0
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.33.0
+requests==2.33.1
     # via
     #   confluent-kafka
     #   edx-drf-extensions

@@ -49,11 +49,11 @@ cffi==2.0.0
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.6
+charset-normalizer==3.4.7
     # via
     #   -r requirements/base.txt
     #   requests
-click==8.3.1
+click==8.3.2
     # via
     #   -r requirements/base.txt
     #   click-log
@@ -70,13 +70,13 @@ code-annotations==3.0.0
     #   edx-toggles
 colorama==0.4.6
     # via tox
-confluent-kafka[avro,schema-registry]==2.13.2
+confluent-kafka[avro,schema-registry]==2.14.0
     # via -r requirements/base.txt
 coverage[toml]==7.13.5
     # via
     #   -r requirements/test.in
     #   pytest-cov
-cryptography==46.0.6
+cryptography==46.0.7
     # via
     #   -r requirements/base.txt
     #   authlib
@@ -213,7 +213,7 @@ edx-event-bus-kafka==6.1.0
     # via -r requirements/base.txt
 edx-lint==6.0.0
     # via -r requirements/test.in
-edx-opaque-keys[django]==3.1.0
+edx-opaque-keys[django]==4.0.0
     # via
     #   -r requirements/base.txt
     #   edx-ccx-keys
@@ -223,16 +223,16 @@ edx-rbac==3.0.0
     # via
     #   -r requirements/base.txt
     #   openedx-ledger
-edx-rest-api-client==6.2.0
+edx-rest-api-client==7.0.0
     # via -r requirements/base.txt
-edx-toggles==5.4.1
+edx-toggles==6.0.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
     #   edx-event-bus-kafka
 factory-boy==3.3.3
     # via -r requirements/test.in
-faker==40.11.1
+faker==40.13.0
     # via factory-boy
 fastavro==1.12.1
     # via
@@ -380,7 +380,7 @@ pynacl==1.6.2
     #   edx-django-utils
 pyproject-api==1.10.0
     # via tox
-pytest==9.0.2
+pytest==9.0.3
     # via
     #   pytest-cov
     #   pytest-django
@@ -390,7 +390,7 @@ pytest-django==4.12.0
     # via -r requirements/test.in
 python-dateutil==2.9.0.post0
     # via -r requirements/base.txt
-python-discovery==1.2.1
+python-discovery==1.2.2
     # via
     #   tox
     #   virtualenv
@@ -425,7 +425,7 @@ referencing==0.37.0
     #   -r requirements/base.txt
     #   jsonschema
     #   jsonschema-specifications
-requests==2.33.0
+requests==2.33.1
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
@@ -490,7 +490,7 @@ tomli-w==1.2.0
     # via tox
 tomlkit==0.14.0
     # via pylint
-tox==4.51.0
+tox==4.52.0
     # via -r requirements/test.in
 typing-extensions==4.15.0
     # via
