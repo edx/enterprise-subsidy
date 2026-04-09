@@ -1,0 +1,28 @@
+CLAUDE.md
+  e95e46a5445665ab 5-12,14,16,18-26,28,30-35,39-58,61,65-91,96,98,100-102
+.claude/settings.json
+  e95e46a5445665ab 1-20
+docs/developing-with-ai.md
+  e95e46a5445665ab 1-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.6",
+  "base_commit_sha": "fee69b6ef074611272ec823483c8cac6c6513e17",
+  "prompts": {
+    "e95e46a5445665ab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "baaaee21-33e3-4be5-8e3d-141b80adb2ac",
+        "model": "claude-opus-4-5-20251101"
+      },
+      "human_author": "Alexander Dusenbery",
+      "messages": [],
+      "total_additions": 145,
+      "total_deletions": 75,
+      "accepted_lines": 145,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/16d7a3ec2e0d381242b17f860b25852c749b8e431bf215679b413bc496f5f53c"
+    }
+  }
+}
