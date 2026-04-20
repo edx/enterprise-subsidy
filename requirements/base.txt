@@ -16,7 +16,7 @@ attrs==26.1.0
     #   jsonschema
     #   openedx-events
     #   referencing
-authlib==1.6.9
+authlib==1.7.0
     # via confluent-kafka
 avro==1.12.1
     # via confluent-kafka
@@ -45,6 +45,7 @@ confluent-kafka[avro,schema-registry]==2.14.0
 cryptography==46.0.7
     # via
     #   authlib
+    #   joserfc
     #   pyjwt
 defusedxml==0.7.1
     # via
@@ -195,6 +196,8 @@ inflection==0.5.1
     #   drf-yasg
 jinja2==3.1.6
     # via code-annotations
+joserfc==1.6.4
+    # via authlib
 jsonfield2==4.0.0.post0
     # via
     #   -r requirements/base.in
@@ -214,14 +217,14 @@ oauthlib==3.3.1
     #   getsmarter-api-clients
     #   requests-oauthlib
     #   social-auth-core
-openedx-events==11.1.0
+openedx-events==11.1.1
     # via
     #   -r requirements/base.in
     #   edx-event-bus-kafka
     #   openedx-ledger
 openedx-ledger==1.7.2
     # via -r requirements/base.in
-packaging==26.0
+packaging==26.1
     # via drf-yasg
 ply==3.11
     # via djangoql

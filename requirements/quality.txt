@@ -25,7 +25,7 @@ attrs==26.1.0
     #   jsonschema
     #   openedx-events
     #   referencing
-authlib==1.6.9
+authlib==1.7.0
     # via
     #   -r requirements/test.txt
     #   confluent-kafka
@@ -84,6 +84,7 @@ cryptography==46.0.7
     # via
     #   -r requirements/test.txt
     #   authlib
+    #   joserfc
     #   pyjwt
     #   secretstorage
 ddt==1.7.2
@@ -246,7 +247,7 @@ edx-toggles==6.0.0
     #   edx-event-bus-kafka
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==40.13.0
+faker==40.15.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -255,7 +256,7 @@ fastavro==1.12.1
     #   -r requirements/test.txt
     #   confluent-kafka
     #   openedx-events
-filelock==3.25.2
+filelock==3.29.0
     # via
     #   -r requirements/test.txt
     #   python-discovery
@@ -311,6 +312,10 @@ jinja2==3.1.6
     # via
     #   -r requirements/test.txt
     #   code-annotations
+joserfc==1.6.4
+    # via
+    #   -r requirements/test.txt
+    #   authlib
 jsonfield2==4.0.0.post0
     # via
     #   -r requirements/test.txt
@@ -339,7 +344,7 @@ mdurl==0.1.2
     # via markdown-it-py
 mock==5.2.0
     # via -r requirements/test.txt
-more-itertools==11.0.1
+more-itertools==11.0.2
     # via
     #   jaraco-classes
     #   jaraco-functools
@@ -355,14 +360,14 @@ oauthlib==3.3.1
     #   getsmarter-api-clients
     #   requests-oauthlib
     #   social-auth-core
-openedx-events==11.1.0
+openedx-events==11.1.1
     # via
     #   -r requirements/test.txt
     #   edx-event-bus-kafka
     #   openedx-ledger
 openedx-ledger==1.7.2
     # via -r requirements/test.txt
-packaging==26.0
+packaging==26.1
     # via
     #   -r requirements/test.txt
     #   drf-yasg
@@ -370,7 +375,7 @@ packaging==26.0
     #   pytest
     #   tox
     #   twine
-platformdirs==4.9.4
+platformdirs==4.9.6
     # via
     #   -r requirements/test.txt
     #   pylint
@@ -518,7 +523,7 @@ responses==0.26.0
     # via -r requirements/test.txt
 rfc3986==2.0.0
     # via twine
-rich==14.3.3
+rich==15.0.0
     # via twine
 rpds-py==0.30.0
     # via
@@ -577,7 +582,7 @@ tomlkit==0.14.0
     # via
     #   -r requirements/test.txt
     #   pylint
-tox==4.52.0
+tox==4.53.0
     # via -r requirements/test.txt
 twine==6.2.0
     # via -r requirements/quality.in
@@ -600,7 +605,7 @@ urllib3==2.6.3
     #   requests
     #   responses
     #   twine
-virtualenv==21.2.0
+virtualenv==21.2.4
     # via
     #   -r requirements/test.txt
     #   tox

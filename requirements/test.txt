@@ -24,7 +24,7 @@ attrs==26.1.0
     #   jsonschema
     #   openedx-events
     #   referencing
-authlib==1.6.9
+authlib==1.7.0
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
@@ -80,6 +80,7 @@ cryptography==46.0.7
     # via
     #   -r requirements/base.txt
     #   authlib
+    #   joserfc
     #   pyjwt
 ddt==1.7.2
     # via -r requirements/test.in
@@ -232,14 +233,14 @@ edx-toggles==6.0.0
     #   edx-event-bus-kafka
 factory-boy==3.3.3
     # via -r requirements/test.in
-faker==40.13.0
+faker==40.15.0
     # via factory-boy
 fastavro==1.12.1
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
     #   openedx-events
-filelock==3.25.2
+filelock==3.29.0
     # via
     #   python-discovery
     #   tox
@@ -277,6 +278,10 @@ jinja2==3.1.6
     # via
     #   -r requirements/base.txt
     #   code-annotations
+joserfc==1.6.4
+    # via
+    #   -r requirements/base.txt
+    #   authlib
 jsonfield2==4.0.0.post0
     # via
     #   -r requirements/base.txt
@@ -307,21 +312,21 @@ oauthlib==3.3.1
     #   getsmarter-api-clients
     #   requests-oauthlib
     #   social-auth-core
-openedx-events==11.1.0
+openedx-events==11.1.1
     # via
     #   -r requirements/base.txt
     #   edx-event-bus-kafka
     #   openedx-ledger
 openedx-ledger==1.7.2
     # via -r requirements/base.txt
-packaging==26.0
+packaging==26.1
     # via
     #   -r requirements/base.txt
     #   drf-yasg
     #   pyproject-api
     #   pytest
     #   tox
-platformdirs==4.9.4
+platformdirs==4.9.6
     # via
     #   pylint
     #   python-discovery
@@ -490,7 +495,7 @@ tomli-w==1.2.0
     # via tox
 tomlkit==0.14.0
     # via pylint
-tox==4.52.0
+tox==4.53.0
     # via -r requirements/test.in
 typing-extensions==4.15.0
     # via
@@ -509,7 +514,7 @@ urllib3==2.6.3
     #   -r requirements/base.txt
     #   requests
     #   responses
-virtualenv==21.2.0
+virtualenv==21.2.4
     # via tox
 
 # The following packages are considered to be unsafe in a requirements file:

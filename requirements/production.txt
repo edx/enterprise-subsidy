@@ -20,7 +20,7 @@ attrs==26.1.0
     #   jsonschema
     #   openedx-events
     #   referencing
-authlib==1.6.9
+authlib==1.7.0
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
@@ -63,6 +63,7 @@ cryptography==46.0.7
     # via
     #   -r requirements/base.txt
     #   authlib
+    #   joserfc
     #   pyjwt
 defusedxml==0.7.1
     # via
@@ -207,7 +208,7 @@ fastavro==1.12.1
     #   openedx-events
 getsmarter-api-clients==0.6.3
     # via -r requirements/base.txt
-gevent==25.9.1
+gevent==26.4.0
     # via -r requirements/production.in
 greenlet==3.4.0
     # via gevent
@@ -240,6 +241,10 @@ jinja2==3.1.6
     # via
     #   -r requirements/base.txt
     #   code-annotations
+joserfc==1.6.4
+    # via
+    #   -r requirements/base.txt
+    #   authlib
 jsonfield2==4.0.0.post0
     # via
     #   -r requirements/base.txt
@@ -267,14 +272,14 @@ oauthlib==3.3.1
     #   getsmarter-api-clients
     #   requests-oauthlib
     #   social-auth-core
-openedx-events==11.1.0
+openedx-events==11.1.1
     # via
     #   -r requirements/base.txt
     #   edx-event-bus-kafka
     #   openedx-ledger
 openedx-ledger==1.7.2
     # via -r requirements/base.txt
-packaging==26.0
+packaging==26.1
     # via
     #   -r requirements/base.txt
     #   drf-yasg
@@ -418,7 +423,7 @@ urllib3==2.6.3
     #   requests
 zope-event==6.1
     # via gevent
-zope-interface==8.2
+zope-interface==8.3
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
