@@ -5,6 +5,7 @@ import logging
 import os
 from datetime import timedelta
 
+import backoff
 import requests
 from django.conf import settings
 
@@ -16,6 +17,28 @@ logger = logging.getLogger(__name__)
 # Name of field in JSON response from bulk enrollment API that contains the value to be used as the reference to the
 # newly created enrollment.
 ENROLLMENT_REF_ID_FIELD_NAME = "enterprise_fulfillment_source_uuid"
+
+# Exceptions worth retrying when calling the LMS bulk-enrollment endpoint.
+# 5xx HTTPErrors are included here and filtered down by ``_bulk_enroll_giveup``.
+_BULK_ENROLL_RETRYABLE_EXCEPTIONS = (
+    requests.exceptions.ConnectionError,
+    requests.exceptions.Timeout,
+    requests.exceptions.HTTPError,
+)
+
+
+def _bulk_enroll_giveup(exc):
+    """
+    backoff ``giveup`` predicate: stop retrying on 4xx HTTPErrors (which are
+    deterministic client errors), but keep retrying 5xx, connection errors,
+    and timeouts. Returns True to stop retrying.
+    """
+    if isinstance(exc, requests.exceptions.HTTPError):
+        response = getattr(exc, 'response', None)
+        if response is None:  # pragma: no cover
+            return False
+        return not 500 <= response.status_code < 600
+    return False
 
 
 class EnrollmentException(Exception):
@@ -122,9 +145,25 @@ class EnterpriseApiClient(BaseOAuthClient):
             )
         return enrollment_success_info.get(ENROLLMENT_REF_ID_FIELD_NAME)
 
+    @backoff.on_exception(
+        backoff.expo,
+        _BULK_ENROLL_RETRYABLE_EXCEPTIONS,
+        max_time=settings.BULK_ENROLL_RETRY_MAX_SECONDS,
+        giveup=_bulk_enroll_giveup,
+        logger=logger,
+    )
     def bulk_enroll_enterprise_learners(self, enterprise_customer_uuid, enrollments_info):
         """
         Calls the Enterprise Bulk Enrollment API to enroll learners in courses.
+
+        The LMS endpoint uses the ledger transaction_id as an idempotency key, so
+        retrying a request that succeeded server-side (e.g. a read-timeout where
+        the write actually landed) returns the existing enrollment rather than
+        creating a duplicate.
+
+        Retries (with exponential backoff, capped at ``BULK_ENROLL_RETRY_MAX_SECONDS``)
+        on connection errors, request timeouts, and 5xx responses. 4xx responses
+        are not retried.
 
         Arguments:
             enterprise_customer_uuid (UUID): UUID representation of the customer that the enrollment will be linked to
@@ -154,17 +193,21 @@ class EnterpriseApiClient(BaseOAuthClient):
         response = self.client.post(
             bulk_enrollment_url,
             json=options,
-            timeout=settings.BULK_ENROLL_REQUEST_TIMEOUT_SECONDS,
+            timeout=(
+                settings.BULK_ENROLL_CONNECT_TIMEOUT_SECONDS,
+                settings.BULK_ENROLL_READ_TIMEOUT_SECONDS,
+            ),
         )
         try:
             response.raise_for_status()
-            return response.json()
         except requests.exceptions.HTTPError as exc:
             logger.error(
-                f'Failed to generate enterprise enrollments for enterprise: {enterprise_customer_uuid} '
-                f'with options: {options}. Failed with error: {exc} and payload {response.json()}'
+                'Failed to generate enterprise enrollments for enterprise: %s with options: %s. '
+                'Failed with error: %s and payload %s',
+                enterprise_customer_uuid, options, exc, response.text,
             )
-            raise exc
+            raise
+        return response.json()
 
     def cancel_fulfillment(self, enterprise_fulfillment_uuid):
         """

@@ -16,13 +16,15 @@ attrs==26.1.0
     #   jsonschema
     #   openedx-events
     #   referencing
-authlib==1.6.9
+authlib==1.7.0
     # via confluent-kafka
 avro==1.12.1
     # via confluent-kafka
-cachetools==7.0.5
+backoff==2.2.1
+    # via -r requirements/base.in
+cachetools==7.0.6
     # via confluent-kafka
-certifi==2026.2.25
+certifi==2026.4.22
     # via
     #   confluent-kafka
     #   httpcore
@@ -34,7 +36,7 @@ cffi==2.0.0
     #   pynacl
 charset-normalizer==3.4.7
     # via requests
-click==8.3.2
+click==8.3.3
     # via
     #   code-annotations
     #   edx-django-utils
@@ -45,6 +47,7 @@ confluent-kafka[avro,schema-registry]==2.14.0
 cryptography==46.0.7
     # via
     #   authlib
+    #   joserfc
     #   pyjwt
 defusedxml==0.7.1
     # via
@@ -184,7 +187,7 @@ httpcore==1.0.9
     # via httpx
 httpx==0.28.1
     # via confluent-kafka
-idna==3.11
+idna==3.13
     # via
     #   anyio
     #   httpx
@@ -195,6 +198,8 @@ inflection==0.5.1
     #   drf-yasg
 jinja2==3.1.6
     # via code-annotations
+joserfc==1.6.4
+    # via authlib
 jsonfield2==4.0.0.post0
     # via
     #   -r requirements/base.in
@@ -214,14 +219,14 @@ oauthlib==3.3.1
     #   getsmarter-api-clients
     #   requests-oauthlib
     #   social-auth-core
-openedx-events==11.1.0
+openedx-events==11.2.0
     # via
     #   -r requirements/base.in
     #   edx-event-bus-kafka
     #   openedx-ledger
 openedx-ledger==1.7.2
     # via -r requirements/base.in
-packaging==26.0
+packaging==26.1
     # via drf-yasg
 ply==3.11
     # via djangoql
@@ -238,7 +243,7 @@ pyjwt[crypto]==2.12.1
     #   social-auth-core
 pymemcache==4.0.0
     # via -r requirements/base.in
-pymongo==4.16.0
+pymongo==4.17.0
     # via edx-opaque-keys
 pynacl==1.6.2
     # via edx-django-utils
@@ -293,9 +298,9 @@ six==1.17.0
     #   edx-django-release-util
     #   edx-rbac
     #   python-dateutil
-social-auth-app-django==5.7.0
+social-auth-app-django==5.8.0
     # via edx-auth-backends
-social-auth-core==4.8.5
+social-auth-core==4.8.6
     # via
     #   edx-auth-backends
     #   social-auth-app-django

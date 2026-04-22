@@ -1,6 +1,7 @@
 # Core requirements for using this application
 -c constraints.txt
 
+backoff
 confluent-kafka[avro,schema-registry]
 Django         # Web application framework
 djangoql
