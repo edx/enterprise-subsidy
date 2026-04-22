@@ -29,7 +29,7 @@ attrs==26.1.0
     #   jsonschema
     #   openedx-events
     #   referencing
-authlib==1.6.9
+authlib==1.7.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -39,13 +39,17 @@ avro==1.12.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   confluent-kafka
-cachetools==7.0.5
+backoff==2.2.1
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+cachetools==7.0.6
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   confluent-kafka
     #   tox
-certifi==2026.2.25
+certifi==2026.4.22
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -64,7 +68,7 @@ charset-normalizer==3.4.7
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   requests
-click==8.3.2
+click==8.3.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -102,6 +106,7 @@ cryptography==46.0.7
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   authlib
+    #   joserfc
     #   pyjwt
     #   secretstorage
 ddt==1.7.2
@@ -310,7 +315,7 @@ factory-boy==3.3.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-faker==40.13.0
+faker==40.15.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -321,7 +326,7 @@ fastavro==1.12.1
     #   -r requirements/test.txt
     #   confluent-kafka
     #   openedx-events
-filelock==3.25.2
+filelock==3.29.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -351,7 +356,7 @@ id==1.6.1
     # via
     #   -r requirements/quality.txt
     #   twine
-idna==3.11
+idna==3.13
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -396,6 +401,11 @@ jinja2==3.1.6
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   code-annotations
+joserfc==1.6.4
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   authlib
 jsonfield2==4.0.0.post0
     # via
     #   -r requirements/quality.txt
@@ -437,7 +447,7 @@ mock==5.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-more-itertools==11.0.1
+more-itertools==11.0.2
     # via
     #   -r requirements/quality.txt
     #   jaraco-classes
@@ -458,7 +468,7 @@ oauthlib==3.3.1
     #   getsmarter-api-clients
     #   requests-oauthlib
     #   social-auth-core
-openedx-events==11.1.0
+openedx-events==11.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -468,7 +478,7 @@ openedx-ledger==1.7.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-packaging==26.0
+packaging==26.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -477,7 +487,7 @@ packaging==26.0
     #   pytest
     #   tox
     #   twine
-platformdirs==4.9.4
+platformdirs==4.9.6
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -555,7 +565,7 @@ pymemcache==4.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-pymongo==4.16.0
+pymongo==4.17.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -665,7 +675,7 @@ rfc3986==2.0.0
     # via
     #   -r requirements/quality.txt
     #   twine
-rich==14.3.3
+rich==15.0.0
     # via
     #   -r requirements/quality.txt
     #   twine
@@ -703,12 +713,12 @@ snowballstemmer==3.0.1
     # via
     #   -r requirements/quality.txt
     #   pydocstyle
-social-auth-app-django==5.7.0
+social-auth-app-django==5.8.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-auth-backends
-social-auth-core==4.8.5
+social-auth-core==4.8.6
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -741,7 +751,7 @@ tomlkit==0.14.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pylint
-tox==4.52.0
+tox==4.53.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -769,7 +779,7 @@ urllib3==2.6.3
     #   requests
     #   responses
     #   twine
-virtualenv==21.2.0
+virtualenv==21.2.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt

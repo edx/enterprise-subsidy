@@ -20,7 +20,7 @@ attrs==26.1.0
     #   jsonschema
     #   openedx-events
     #   referencing
-authlib==1.6.9
+authlib==1.7.0
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
@@ -28,11 +28,13 @@ avro==1.12.1
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
-cachetools==7.0.5
+backoff==2.2.1
+    # via -r requirements/base.txt
+cachetools==7.0.6
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
-certifi==2026.2.25
+certifi==2026.4.22
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
@@ -48,7 +50,7 @@ charset-normalizer==3.4.7
     # via
     #   -r requirements/base.txt
     #   requests
-click==8.3.2
+click==8.3.3
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -63,6 +65,7 @@ cryptography==46.0.7
     # via
     #   -r requirements/base.txt
     #   authlib
+    #   joserfc
     #   pyjwt
 defusedxml==0.7.1
     # via
@@ -207,7 +210,7 @@ fastavro==1.12.1
     #   openedx-events
 getsmarter-api-clients==0.6.3
     # via -r requirements/base.txt
-gevent==25.9.1
+gevent==26.4.0
     # via -r requirements/production.in
 greenlet==3.4.0
     # via gevent
@@ -225,7 +228,7 @@ httpx==0.28.1
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
-idna==3.11
+idna==3.13
     # via
     #   -r requirements/base.txt
     #   anyio
@@ -240,6 +243,10 @@ jinja2==3.1.6
     # via
     #   -r requirements/base.txt
     #   code-annotations
+joserfc==1.6.4
+    # via
+    #   -r requirements/base.txt
+    #   authlib
 jsonfield2==4.0.0.post0
     # via
     #   -r requirements/base.txt
@@ -267,14 +274,14 @@ oauthlib==3.3.1
     #   getsmarter-api-clients
     #   requests-oauthlib
     #   social-auth-core
-openedx-events==11.1.0
+openedx-events==11.2.0
     # via
     #   -r requirements/base.txt
     #   edx-event-bus-kafka
     #   openedx-ledger
 openedx-ledger==1.7.2
     # via -r requirements/base.txt
-packaging==26.0
+packaging==26.1
     # via
     #   -r requirements/base.txt
     #   drf-yasg
@@ -301,7 +308,7 @@ pyjwt[crypto]==2.12.1
     #   social-auth-core
 pymemcache==4.0.0
     # via -r requirements/base.txt
-pymongo==4.16.0
+pymongo==4.17.0
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
@@ -378,11 +385,11 @@ six==1.17.0
     #   edx-django-release-util
     #   edx-rbac
     #   python-dateutil
-social-auth-app-django==5.7.0
+social-auth-app-django==5.8.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
-social-auth-core==4.8.5
+social-auth-core==4.8.6
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
@@ -418,7 +425,7 @@ urllib3==2.6.3
     #   requests
 zope-event==6.1
     # via gevent
-zope-interface==8.2
+zope-interface==8.3
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:

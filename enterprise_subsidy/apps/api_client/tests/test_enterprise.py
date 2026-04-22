@@ -4,10 +4,11 @@ from uuid import uuid4
 
 import ddt
 from django.conf import settings
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from openedx_ledger.models import TransactionStateChoices
 from openedx_ledger.test_utils.factories import TransactionFactory
-from requests.exceptions import HTTPError
+from requests.exceptions import ConnectionError as RequestsConnectionError
+from requests.exceptions import HTTPError, ReadTimeout
 
 from enterprise_subsidy.apps.api_client.enterprise import (
     ENROLLMENT_REF_ID_FIELD_NAME,
@@ -64,7 +65,10 @@ class EnterpriseApiClientTests(TestCase):
                 'course_run_key': self.courserun_key,
                 'transaction_id': 'some-transaction-id',
             }]},
-            timeout=settings.BULK_ENROLL_REQUEST_TIMEOUT_SECONDS
+            timeout=(
+                settings.BULK_ENROLL_CONNECT_TIMEOUT_SECONDS,
+                settings.BULK_ENROLL_READ_TIMEOUT_SECONDS,
+            ),
         )
 
     @mock.patch('enterprise_subsidy.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
@@ -110,7 +114,10 @@ class EnterpriseApiClientTests(TestCase):
                 'course_run_key': self.courserun_key,
                 'transaction_id': str(transaction.uuid),
             }]},
-            timeout=settings.BULK_ENROLL_REQUEST_TIMEOUT_SECONDS
+            timeout=(
+                settings.BULK_ENROLL_CONNECT_TIMEOUT_SECONDS,
+                settings.BULK_ENROLL_READ_TIMEOUT_SECONDS,
+            ),
         )
 
     @mock.patch('enterprise_subsidy.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
@@ -157,7 +164,10 @@ class EnterpriseApiClientTests(TestCase):
                 'transaction_id': str(transaction.uuid),
                 'force_enrollment': True,  # The actual unique thing we're testing in this test.
             }]},
-            timeout=settings.BULK_ENROLL_REQUEST_TIMEOUT_SECONDS
+            timeout=(
+                settings.BULK_ENROLL_CONNECT_TIMEOUT_SECONDS,
+                settings.BULK_ENROLL_READ_TIMEOUT_SECONDS,
+            ),
         )
 
     @mock.patch('enterprise_subsidy.apps.api_client.base_oauth.OAuthAPIClient', return_value=mock.MagicMock())
@@ -285,3 +295,133 @@ class EnterpriseApiClientTests(TestCase):
         enterprise_client = EnterpriseApiClient()
         response = enterprise_client.get_enterprise_customer_data(self.enterprise_customer_uuid)
         assert response.get('uuid') == str(self.enterprise_customer_uuid)
+
+
+@ddt.ddt
+class BulkEnrollRetryTests(TestCase):
+    """
+    Retry behavior for ``EnterpriseApiClient.bulk_enroll_enterprise_learners``.
+
+    ``time.sleep`` is patched to a no-op so exponential backoff delays
+    don't slow the suite.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.enterprise_customer_uuid = uuid4()
+        self.user_id = 3
+        self.courserun_key = 'course-v1:edX+DemoX+Demo_Course'
+        self.enrollments_info = [{
+            'user_id': self.user_id,
+            'course_run_key': self.courserun_key,
+            'transaction_id': 'some-transaction-id',
+        }]
+
+    def _success_response(self):
+        return MockResponse(
+            {
+                'successes': [{
+                    'user_id': self.user_id,
+                    'course_run_key': self.courserun_key,
+                }],
+                'pending': [],
+                'failures': [],
+            },
+            201,
+        )
+
+    @mock.patch('time.sleep', return_value=None)
+    @mock.patch('enterprise_subsidy.apps.api_client.base_oauth.OAuthAPIClient')
+    def test_retries_on_5xx_then_succeeds(self, mock_oauth_client, _mock_sleep):
+        """5xx responses should be retried until success."""
+        mock_oauth_client.return_value.post.side_effect = [
+            MockResponse({'error': 'service unavailable'}, 503),
+            MockResponse({'error': 'gateway'}, 502),
+            self._success_response(),
+        ]
+        client = EnterpriseApiClient()
+        response = client.bulk_enroll_enterprise_learners(
+            self.enterprise_customer_uuid, self.enrollments_info,
+        )
+        self.assertEqual(mock_oauth_client.return_value.post.call_count, 3)
+        self.assertIn('successes', response)
+
+    @mock.patch('time.sleep', return_value=None)
+    @mock.patch('enterprise_subsidy.apps.api_client.base_oauth.OAuthAPIClient')
+    def test_retries_on_read_timeout_then_succeeds(self, mock_oauth_client, _mock_sleep):
+        """A ReadTimeout (the motivating ticket scenario) should be retried."""
+        mock_oauth_client.return_value.post.side_effect = [
+            ReadTimeout('read timed out'),
+            self._success_response(),
+        ]
+        client = EnterpriseApiClient()
+        response = client.bulk_enroll_enterprise_learners(
+            self.enterprise_customer_uuid, self.enrollments_info,
+        )
+        self.assertEqual(mock_oauth_client.return_value.post.call_count, 2)
+        self.assertIn('successes', response)
+
+    @mock.patch('time.sleep', return_value=None)
+    @mock.patch('enterprise_subsidy.apps.api_client.base_oauth.OAuthAPIClient')
+    def test_retries_on_connection_error_then_succeeds(self, mock_oauth_client, _mock_sleep):
+        """Low-level connection resets should be retried."""
+        mock_oauth_client.return_value.post.side_effect = [
+            RequestsConnectionError('connection reset'),
+            self._success_response(),
+        ]
+        client = EnterpriseApiClient()
+        client.bulk_enroll_enterprise_learners(
+            self.enterprise_customer_uuid, self.enrollments_info,
+        )
+        self.assertEqual(mock_oauth_client.return_value.post.call_count, 2)
+
+    @ddt.data(400, 401, 403, 404, 422)
+    @mock.patch('time.sleep', return_value=None)
+    @mock.patch('enterprise_subsidy.apps.api_client.base_oauth.OAuthAPIClient')
+    def test_no_retry_on_4xx(self, status_code, mock_oauth_client, _mock_sleep):
+        """Deterministic client errors should not be retried."""
+        mock_oauth_client.return_value.post.return_value = MockResponse(
+            {'error': 'client error'}, status_code,
+        )
+        client = EnterpriseApiClient()
+        with self.assertRaises(HTTPError):
+            client.bulk_enroll_enterprise_learners(
+                self.enterprise_customer_uuid, self.enrollments_info,
+            )
+        self.assertEqual(mock_oauth_client.return_value.post.call_count, 1)
+
+    @mock.patch('enterprise_subsidy.apps.api_client.base_oauth.OAuthAPIClient')
+    def test_gives_up_after_max_time(self, mock_oauth_client):
+        """Persistent failures should surface the exception once max_time elapses."""
+        mock_oauth_client.return_value.post.side_effect = ReadTimeout('persistent')
+        client = EnterpriseApiClient()
+        with self.assertRaises(ReadTimeout):
+            client.bulk_enroll_enterprise_learners(
+                self.enterprise_customer_uuid, self.enrollments_info,
+            )
+
+        # We should make at least one call.
+        # The test settings define a very small BULK_ENROLL_RETRY_MAX_SECONDS value,
+        # so we set some sufficiently high upper bound for completeness.
+        # Local testing shows a max seconds value of 0.5 typically results in 3 calls,
+        # so we can use 10 as a safe upper-bound that shouldn't result in this test being flaky.
+        self.assertGreaterEqual(mock_oauth_client.return_value.post.call_count, 1)
+        self.assertLessEqual(mock_oauth_client.return_value.post.call_count, 10)
+
+    @mock.patch('time.sleep', return_value=None)
+    @mock.patch('enterprise_subsidy.apps.api_client.base_oauth.OAuthAPIClient')
+    def test_request_uses_split_connect_and_read_timeouts(self, mock_oauth_client, _mock_sleep):
+        """Timeout should be passed to requests as a (connect, read) tuple."""
+        mock_oauth_client.return_value.post.return_value = self._success_response()
+        client = EnterpriseApiClient()
+        client.bulk_enroll_enterprise_learners(
+            self.enterprise_customer_uuid, self.enrollments_info,
+        )
+        _, kwargs = mock_oauth_client.return_value.post.call_args
+        self.assertEqual(
+            kwargs['timeout'],
+            (
+                settings.BULK_ENROLL_CONNECT_TIMEOUT_SECONDS,
+                settings.BULK_ENROLL_READ_TIMEOUT_SECONDS,
+            ),
+        )
