@@ -44,7 +44,7 @@ code-annotations==3.0.0
     # via edx-toggles
 confluent-kafka[avro,schema-registry]==2.14.0
     # via -r requirements/base.in
-cryptography==46.0.7
+cryptography==47.0.0
     # via
     #   authlib
     #   joserfc
@@ -175,7 +175,7 @@ edx-toggles==6.0.0
     # via
     #   edx-auth-backends
     #   edx-event-bus-kafka
-fastavro==1.12.1
+fastavro==1.12.2
     # via
     #   confluent-kafka
     #   openedx-events
@@ -226,7 +226,7 @@ openedx-events==11.2.0
     #   openedx-ledger
 openedx-ledger==1.7.2
     # via -r requirements/base.in
-packaging==26.1
+packaging==26.2
     # via drf-yasg
 ply==3.11
     # via djangoql
@@ -300,7 +300,7 @@ six==1.17.0
     #   python-dateutil
 social-auth-app-django==5.8.0
     # via edx-auth-backends
-social-auth-core==4.8.6
+social-auth-core==4.8.7
     # via
     #   edx-auth-backends
     #   social-auth-app-django

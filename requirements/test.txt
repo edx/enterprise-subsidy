@@ -78,7 +78,7 @@ coverage[toml]==7.13.5
     # via
     #   -r requirements/test.in
     #   pytest-cov
-cryptography==46.0.7
+cryptography==47.0.0
     # via
     #   -r requirements/base.txt
     #   authlib
@@ -237,7 +237,7 @@ factory-boy==3.3.3
     # via -r requirements/test.in
 faker==40.15.0
     # via factory-boy
-fastavro==1.12.1
+fastavro==1.12.2
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
@@ -321,7 +321,7 @@ openedx-events==11.2.0
     #   openedx-ledger
 openedx-ledger==1.7.2
     # via -r requirements/base.txt
-packaging==26.1
+packaging==26.2
     # via
     #   -r requirements/base.txt
     #   drf-yasg
@@ -474,7 +474,7 @@ social-auth-app-django==5.8.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
-social-auth-core==4.8.6
+social-auth-core==4.8.7
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends

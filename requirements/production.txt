@@ -61,7 +61,7 @@ code-annotations==3.0.0
     #   edx-toggles
 confluent-kafka[avro,schema-registry]==2.14.0
     # via -r requirements/base.txt
-cryptography==46.0.7
+cryptography==47.0.0
     # via
     #   -r requirements/base.txt
     #   authlib
@@ -203,7 +203,7 @@ edx-toggles==6.0.0
     #   -r requirements/base.txt
     #   edx-auth-backends
     #   edx-event-bus-kafka
-fastavro==1.12.1
+fastavro==1.12.2
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
@@ -281,7 +281,7 @@ openedx-events==11.2.0
     #   openedx-ledger
 openedx-ledger==1.7.2
     # via -r requirements/base.txt
-packaging==26.1
+packaging==26.2
     # via
     #   -r requirements/base.txt
     #   drf-yasg
@@ -389,7 +389,7 @@ social-auth-app-django==5.8.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
-social-auth-core==4.8.6
+social-auth-core==4.8.7
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
@@ -425,7 +425,7 @@ urllib3==2.6.3
     #   requests
 zope-event==6.1
     # via gevent
-zope-interface==8.3
+zope-interface==8.4
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
