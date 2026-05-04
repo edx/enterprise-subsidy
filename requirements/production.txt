@@ -13,6 +13,7 @@ asgiref==3.11.1
     #   -r requirements/base.txt
     #   django
     #   django-cors-headers
+    #   social-auth-app-django
 attrs==26.1.0
     # via
     #   -r requirements/base.txt
@@ -30,7 +31,7 @@ avro==1.12.1
     #   confluent-kafka
 backoff==2.2.1
     # via -r requirements/base.txt
-cachetools==7.0.6
+cachetools==7.1.1
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
@@ -61,12 +62,13 @@ code-annotations==3.0.0
     #   edx-toggles
 confluent-kafka[avro,schema-registry]==2.14.0
     # via -r requirements/base.txt
-cryptography==46.0.7
+cryptography==47.0.0
     # via
     #   -r requirements/base.txt
     #   authlib
     #   joserfc
     #   pyjwt
+    #   social-auth-core
 defusedxml==0.7.1
     # via
     #   -r requirements/base.txt
@@ -122,7 +124,7 @@ django-model-utils==5.0.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
-django-object-actions==5.0.0
+django-object-actions==5.0.1
     # via
     #   -r requirements/base.txt
     #   openedx-ledger
@@ -203,7 +205,7 @@ edx-toggles==6.0.0
     #   -r requirements/base.txt
     #   edx-auth-backends
     #   edx-event-bus-kafka
-fastavro==1.12.1
+fastavro==1.12.2
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
@@ -212,7 +214,7 @@ getsmarter-api-clients==0.6.3
     # via -r requirements/base.txt
 gevent==26.4.0
     # via -r requirements/production.in
-greenlet==3.4.0
+greenlet==3.5.0
     # via gevent
 gunicorn==25.3.0
     # via -r requirements/production.in
@@ -281,7 +283,7 @@ openedx-events==11.2.0
     #   openedx-ledger
 openedx-ledger==1.7.2
     # via -r requirements/base.txt
-packaging==26.1
+packaging==26.2
     # via
     #   -r requirements/base.txt
     #   drf-yasg
@@ -328,7 +330,7 @@ python3-openid==3.2.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-pytz==2026.1.post1
+pytz==2026.2
     # via
     #   -r requirements/base.txt
     #   drf-yasg
@@ -385,11 +387,11 @@ six==1.17.0
     #   edx-django-release-util
     #   edx-rbac
     #   python-dateutil
-social-auth-app-django==5.8.0
+social-auth-app-django==5.9.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
-social-auth-core==4.8.6
+social-auth-core==4.9.1
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
@@ -423,9 +425,9 @@ urllib3==2.6.3
     # via
     #   -r requirements/base.txt
     #   requests
-zope-event==6.1
+zope-event==6.2
     # via gevent
-zope-interface==8.3
+zope-interface==8.4
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
