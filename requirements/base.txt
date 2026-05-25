@@ -23,9 +23,9 @@ avro==1.12.1
     # via confluent-kafka
 backoff==2.2.1
     # via -r requirements/base.in
-cachetools==7.1.1
+cachetools==7.1.4
     # via confluent-kafka
-certifi==2026.4.22
+certifi==2026.5.20
     # via
     #   confluent-kafka
     #   httpcore
@@ -37,7 +37,7 @@ cffi==2.0.0
     #   pynacl
 charset-normalizer==3.4.7
     # via requests
-click==8.3.3
+click==8.4.1
     # via
     #   code-annotations
     #   edx-django-utils
@@ -103,7 +103,7 @@ django-log-request-id==2.1.2
     # via -r requirements/base.in
 django-model-utils==5.0.0
     # via edx-rbac
-django-object-actions==5.0.1
+django-object-actions==5.1.1
     # via
     #   -r requirements/base.in
     #   openedx-ledger
@@ -189,7 +189,7 @@ httpcore==1.0.9
     # via httpx
 httpx==0.28.1
     # via confluent-kafka
-idna==3.14
+idna==3.16
     # via
     #   anyio
     #   httpx
@@ -200,7 +200,7 @@ inflection==0.5.1
     #   drf-yasg
 jinja2==3.1.6
     # via code-annotations
-joserfc==1.6.5
+joserfc==1.6.7
     # via authlib
 jsonfield2==4.0.0.post0
     # via
@@ -236,7 +236,7 @@ psutil==7.2.2
     # via edx-django-utils
 pycparser==3.0
     # via cffi
-pyjwt[crypto]==2.12.1
+pyjwt[crypto]==2.13.0
     # via
     #   drf-jwt
     #   edx-auth-backends
@@ -272,7 +272,7 @@ referencing==0.37.0
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.33.1
+requests==2.34.2
     # via
     #   confluent-kafka
     #   edx-drf-extensions
@@ -308,7 +308,7 @@ social-auth-core==4.9.1
     #   social-auth-app-django
 sqlparse==0.5.5
     # via django
-stevedore==5.7.0
+stevedore==5.8.0
     # via
     #   code-annotations
     #   edx-django-utils
