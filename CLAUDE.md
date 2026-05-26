@@ -19,18 +19,16 @@ Enterprise Subsidy is a Django-based microservice within the Open edX ecosystem 
 - Write comprehensive tests with clear documentation
 - Follow Test-Driven Development when refactoring or modifying existing functionality
 - Always write tests for new functionality you implement
-- Make a note of when tests for some functionality have been completed. If you
-  cannot run the tests, ask me to run them manually, then confirm whether they succeeded or failed.
 - Keep changes focused and minimal
 - Follow existing code patterns
 - Prefer the `ddt` package for parameterized tests to reduce code duplication
 
 ## Documentation & Institutional Memory
 
-- Document new functionality in relevant docstrings and comments
+- Document new functionality in `docs/references/`
 - When you learn something important about how this codebase works (gotchas, non-obvious
-  patterns, integration quirks), capture it in the relevant documentation or
-  suggest adding it to `docs/architecture_overview.rst`
+  patterns, integration quirks), capture it in the relevant `docs/references/` file or
+  in `docs/architecture-patterns.md`
 - These docs are institutional memory - future sessions (yours or others) will benefit
   from what you record here
 
@@ -82,10 +80,6 @@ and should be consulted when you need to understand the entire service beyond wh
 - Uses pytest with Django integration
 - Coverage reporting enabled by default
 - PII annotation checks required for Django models
-- Test commands:
-  - `make test`: Run tests with coverage
-  - `make validate`: Run all tests, quality checks, PII checks, and keyword checks
-  - `pytest ./path/to/tests`: Run specific tests
 
 ## Data Model Architecture
 
@@ -100,3 +94,11 @@ and should be consulted when you need to understand the entire service beyond wh
 - `docs/architecture_overview.rst`: Comprehensive architecture guide for developers new to the edX ecosystem
 - `docs/caching.rst`: Cache design, TieredCache usage, and versioned cache key patterns
 - `docs/decisions/`: Architectural Decision Records (ADRs) documenting key design choices
+
+## Before opening a PR or pushing a branch
+
+Run a self-check on the diff before creating a PR or pushing:
+1. Compute effective LoC — exclude lockfiles, generated files, snapshots, and vendor code.
+2. Count effective touched files — exclude the above plus one-to-one test pairs.
+3. If effective LoC > 400 or effective files > 10, stop and propose a split before proceeding.
+4. Report the result inline before continuing.
