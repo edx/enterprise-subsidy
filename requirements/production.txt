@@ -4,7 +4,7 @@
 #
 #    make upgrade
 #
-anyio==4.13.0
+anyio==4.14.1
     # via
     #   -r requirements/base.txt
     #   httpx
@@ -35,7 +35,7 @@ cachetools==7.1.4
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
-certifi==2026.5.20
+certifi==2026.6.17
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
@@ -51,7 +51,7 @@ charset-normalizer==3.4.7
     # via
     #   -r requirements/base.txt
     #   requests
-click==8.4.1
+click==8.4.2
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -62,7 +62,7 @@ code-annotations==3.0.0
     #   edx-toggles
 confluent-kafka[avro,schema-registry]==2.14.2
     # via -r requirements/base.txt
-cryptography==48.0.0
+cryptography==49.0.0
     # via
     #   -r requirements/base.txt
     #   authlib
@@ -214,7 +214,7 @@ getsmarter-api-clients==0.6.3
     # via -r requirements/base.txt
 gevent==26.5.0
     # via -r requirements/production.in
-greenlet==3.5.1
+greenlet==3.5.2
     # via gevent
 gunicorn==26.0.0
     # via -r requirements/production.in
@@ -245,7 +245,7 @@ jinja2==3.1.6
     # via
     #   -r requirements/base.txt
     #   code-annotations
-joserfc==1.7.0
+joserfc==1.7.1
     # via
     #   -r requirements/base.txt
     #   authlib
@@ -281,7 +281,7 @@ openedx-events==11.2.0
     #   -r requirements/base.txt
     #   edx-event-bus-kafka
     #   openedx-ledger
-openedx-ledger==1.7.2
+openedx-ledger==1.8.0
     # via -r requirements/base.txt
 packaging==26.2
     # via
@@ -344,7 +344,7 @@ pyyaml==6.0.3
     #   drf-spectacular
     #   drf-yasg
     #   edx-django-release-util
-redis==8.0.0
+redis==8.0.1
     # via
     #   -r requirements/base.txt
     #   openedx-ledger
@@ -387,11 +387,11 @@ six==1.17.0
     #   edx-django-release-util
     #   edx-rbac
     #   python-dateutil
-social-auth-app-django==5.9.0
+social-auth-app-django==6.0.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
-social-auth-core==4.9.1
+social-auth-core==5.0.1
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
