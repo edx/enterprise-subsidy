@@ -1,11 +1,14 @@
 """
 Views for the enterprise-subsidy service relating to the Transaction model
 """
+import csv
+import datetime
 import logging
 
+from django.http import HttpResponse
 from django.utils.functional import cached_property
 from django_filters import rest_framework as drf_filters
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from openedx_ledger.models import LedgerLockAttemptFailed, Transaction
@@ -95,6 +98,16 @@ class TransactionAdminListCreate(TransactionBaseViewMixin, generics.ListCreateAP
     # `ordering` defines the default order.
     ordering = ['-created']
 
+    # (model field, CSV column label) pairs for the downloadable spent report.
+    csv_columns = [
+        ('lms_user_email', 'Email'),
+        ('content_title', 'Course'),
+        ('content_key', 'Course Key'),
+        ('quantity', 'Amount'),
+        ('created', 'Date'),
+        ('course_run_start_date', 'Start Date'),
+    ]
+
     def __init__(self, *args, **kwargs):
         self.extra_context = {}
         super().__init__(*args, **kwargs)
@@ -118,6 +131,19 @@ class TransactionAdminListCreate(TransactionBaseViewMixin, generics.ListCreateAP
     # For APIView based views, these are get, post, create, etc.
     @extend_schema(
         tags=['transactions'],
+        parameters=[
+            OpenApiParameter(
+                name='format_csv',
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description=(
+                    'When true, returns the full filtered result set as a downloadable '
+                    '`text/csv` attachment instead of the paginated JSON response '
+                    '(pagination/aggregate fields are not present in the CSV).'
+                ),
+            ),
+        ],
         responses={
             status.HTTP_200_OK: TransactionSerializer,
             status.HTTP_403_FORBIDDEN: PermissionDenied,
@@ -140,8 +166,38 @@ class TransactionAdminListCreate(TransactionBaseViewMixin, generics.ListCreateAP
     def list(self, request, subsidy_uuid):
         """
         See docstring for get() above.
+
+        When ``format_csv=true`` is passed, returns the full filtered result set as a downloadable CSV.
         """
+        if request.query_params.get('format_csv', 'false').lower() in ('true', '1'):
+            return self.render_csv(self.filter_queryset(self.get_queryset()))
         return super().list(request, subsidy_uuid)
+
+    def render_csv(self, queryset):
+        """
+        Renders the given transaction queryset as a downloadable CSV (no pagination).
+
+        Uses ``.iterator()`` to avoid caching the full result set in memory for large exports.
+        """
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="transactions.csv"'
+        writer = csv.writer(response)
+        writer.writerow([label for _, label in self.csv_columns])
+        # chunk_size is required because the base queryset uses prefetch_related().
+        for transaction in queryset.iterator(chunk_size=2000):
+            writer.writerow([self._format_csv_value(getattr(transaction, field)) for field, _ in self.csv_columns])
+        return response
+
+    @staticmethod
+    def _format_csv_value(value):
+        """
+        Normalizes a model value for CSV output: blank for nulls, ISO 8601 for datetimes.
+        """
+        if value is None:
+            return ''
+        if isinstance(value, (datetime.datetime, datetime.date)):
+            return value.isoformat()
+        return value
 
     @extend_schema(
         tags=['transactions'],

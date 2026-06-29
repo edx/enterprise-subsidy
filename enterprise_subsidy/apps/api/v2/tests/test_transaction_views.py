@@ -1,6 +1,8 @@
 """
 Tests for the v2 transaction views.
 """
+import csv
+import io
 import urllib
 import uuid
 from datetime import timedelta
@@ -379,6 +381,31 @@ class TransactionAdminListViewTests(APITestBase):
         # of their subsidies' ledgers.
         self._prepend_initial_transaction_uuid(subsidy_uuid, expected_response_uuids)
         self.assertEqual(sorted(response_uuids), sorted(expected_response_uuids))
+
+    def test_admin_list_transactions_format_csv(self):
+        """
+        Test that ``format_csv=true`` returns a downloadable CSV of the full (unpaginated) result set,
+        with the expected header columns in order.
+        """
+        self.set_up_admin()
+        url = reverse("api:v2:transaction-admin-list-create", args=[self.subsidy_1_uuid])
+
+        # Total number of admin-visible transactions for this subsidy, per the paginated endpoint.
+        expected_count = self.client.get(url).json()['count']
+
+        response = self.client.get(url, data={'format_csv': 'true'})
+
+        assert response.status_code == status.HTTP_200_OK
+        assert 'text/csv' in response['Content-Type']
+        assert response['Content-Disposition'] == 'attachment; filename="transactions.csv"'
+
+        rows = list(csv.reader(io.StringIO(response.content.decode('utf-8'))))
+        # Header row matches the expected columns and order.
+        assert rows[0] == ['Email', 'Course', 'Course Key', 'Amount', 'Date', 'Start Date']
+        # One data row per transaction, i.e. the CSV is not paginated.
+        assert len(rows) - 1 == expected_count
+        # The learner email of a subsidy_1 transaction shows up in the CSV body.
+        assert self.lms_user_email in response.content.decode('utf-8')
 
     def test_admin_list_transactions_default_pagination_behavior(self):
         """
