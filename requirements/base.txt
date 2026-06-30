@@ -200,7 +200,7 @@ inflection==0.5.1
     #   drf-yasg
 jinja2==3.1.6
     # via code-annotations
-joserfc==1.7.1
+joserfc==1.7.2
     # via authlib
 jsonfield2==4.0.0.post0
     # via
@@ -283,7 +283,7 @@ requests-oauthlib==2.0.0
     # via
     #   getsmarter-api-clients
     #   social-auth-core
-rpds-py==2026.5.1
+rpds-py==2026.6.3
     # via
     #   jsonschema
     #   referencing
@@ -301,9 +301,12 @@ six==1.17.0
     #   edx-rbac
     #   python-dateutil
 social-auth-app-django==5.9.0
-    # via edx-auth-backends
+    # via
+    #   -c requirements/constraints.txt
+    #   edx-auth-backends
 social-auth-core==4.9.1
     # via
+    #   -c requirements/constraints.txt
     #   edx-auth-backends
     #   social-auth-app-django
 sqlparse==0.5.5
