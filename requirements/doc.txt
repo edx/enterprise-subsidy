@@ -268,7 +268,7 @@ edx-toggles==6.0.0
     #   edx-event-bus-kafka
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==40.23.0
+faker==40.27.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -335,7 +335,7 @@ jinja2==3.1.6
     #   -r requirements/test.txt
     #   code-annotations
     #   sphinx
-joserfc==1.7.1
+joserfc==1.7.2
     # via
     #   -r requirements/test.txt
     #   authlib
@@ -559,7 +559,7 @@ rich==15.0.0
     # via twine
 roman-numerals==4.1.0
     # via sphinx
-rpds-py==2026.5.1
+rpds-py==2026.6.3
     # via
     #   -r requirements/test.txt
     #   jsonschema
@@ -587,10 +587,12 @@ snowballstemmer==3.1.1
     # via sphinx
 social-auth-app-django==5.9.0
     # via
+    #   -c requirements/constraints.txt
     #   -r requirements/test.txt
     #   edx-auth-backends
 social-auth-core==4.9.1
     # via
+    #   -c requirements/constraints.txt
     #   -r requirements/test.txt
     #   edx-auth-backends
     #   social-auth-app-django
