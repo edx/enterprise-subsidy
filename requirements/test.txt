@@ -73,9 +73,9 @@ code-annotations==3.0.0
     #   edx-toggles
 colorama==0.4.6
     # via tox
-confluent-kafka[avro,schema-registry]==2.14.2
+confluent-kafka[avro,schema-registry]==2.15.0
     # via -r requirements/base.txt
-coverage[toml]==7.14.3
+coverage[toml]==7.15.0
     # via
     #   -r requirements/test.in
     #   pytest-cov
@@ -237,7 +237,7 @@ edx-toggles==6.0.0
     #   edx-event-bus-kafka
 factory-boy==3.3.3
     # via -r requirements/test.in
-faker==40.27.0
+faker==40.28.1
     # via factory-boy
 fastavro==1.12.2
     # via
@@ -487,7 +487,7 @@ sqlparse==0.5.5
     # via
     #   -r requirements/base.txt
     #   django
-stevedore==5.8.0
+stevedore==5.9.0
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -505,7 +505,7 @@ tomlkit==0.15.0
     #   pylint
 tox==4.56.1
     # via -r requirements/test.in
-typing-extensions==4.15.0
+typing-extensions==4.16.0
     # via
     #   -r requirements/base.txt
     #   anyio
