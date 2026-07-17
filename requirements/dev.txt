@@ -4,11 +4,11 @@
 #
 #    make upgrade
 #
-anyio==4.14.1
+anyio==4.14.2
     # via
     #   -r requirements/validation.txt
     #   httpx
-asgiref==3.11.1
+asgiref==3.12.1
     # via
     #   -r requirements/validation.txt
     #   django
@@ -52,14 +52,14 @@ certifi==2026.6.17
     #   httpcore
     #   httpx
     #   requests
-cffi==2.0.0
+cffi==2.1.0
     # via
     #   -r requirements/validation.txt
     #   cryptography
     #   pynacl
 chardet==7.4.3
     # via diff-cover
-charset-normalizer==3.4.7
+charset-normalizer==3.4.9
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -87,7 +87,7 @@ colorama==0.4.6
     #   tox
 confluent-kafka[avro,schema-registry]==2.15.0
     # via -r requirements/validation.txt
-coverage[toml]==7.15.0
+coverage[toml]==7.15.2
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
@@ -118,7 +118,7 @@ distlib==0.4.3
     # via
     #   -r requirements/validation.txt
     #   virtualenv
-django==5.2.15
+django==5.2.16
     # via
     #   -r requirements/validation.txt
     #   django-clearcache
@@ -165,7 +165,7 @@ django-extensions==4.1
     #   -r requirements/dev.in
     #   -r requirements/validation.txt
     #   openedx-ledger
-django-filter==25.2
+django-filter==26.1
     # via
     #   -r requirements/validation.txt
     #   openedx-ledger
@@ -215,7 +215,7 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/validation.txt
     #   edx-drf-extensions
-drf-spectacular==0.29.0
+drf-spectacular==0.30.0
     # via -r requirements/validation.txt
 drf-yasg==1.21.15
     # via -r requirements/validation.txt
@@ -269,7 +269,7 @@ edx-toggles==6.0.0
     #   edx-event-bus-kafka
 factory-boy==3.3.3
     # via -r requirements/validation.txt
-faker==40.28.1
+faker==40.31.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -278,7 +278,7 @@ fastavro==1.12.2
     #   -r requirements/validation.txt
     #   confluent-kafka
     #   openedx-events
-filelock==3.29.4
+filelock==3.30.2
     # via
     #   -r requirements/validation.txt
     #   python-discovery
@@ -329,7 +329,7 @@ jaraco-context==6.1.2
     # via
     #   -r requirements/validation.txt
     #   keyring
-jaraco-functools==4.5.0
+jaraco-functools==4.6.0
     # via
     #   -r requirements/validation.txt
     #   keyring
@@ -343,7 +343,7 @@ jinja2==3.1.6
     #   -r requirements/validation.txt
     #   code-annotations
     #   diff-cover
-joserfc==1.7.2
+joserfc==1.7.3
     # via
     #   -r requirements/validation.txt
     #   authlib
@@ -486,7 +486,7 @@ pylint-celery==0.3
     # via
     #   -r requirements/validation.txt
     #   edx-lint
-pylint-django==2.7.0
+pylint-django==2.8.0
     # via
     #   -r requirements/validation.txt
     #   edx-lint
@@ -525,7 +525,7 @@ pytest-django==4.12.0
     # via -r requirements/validation.txt
 python-dateutil==2.9.0.post0
     # via -r requirements/validation.txt
-python-discovery==1.4.2
+python-discovery==1.4.4
     # via
     #   -r requirements/validation.txt
     #   tox
@@ -586,7 +586,7 @@ requests-toolbelt==1.0.0
     # via
     #   -r requirements/validation.txt
     #   twine
-responses==0.26.1
+responses==0.26.2
     # via -r requirements/validation.txt
 rfc3986==2.0.0
     # via
@@ -654,12 +654,12 @@ tomli-w==1.2.0
     # via
     #   -r requirements/validation.txt
     #   tox
-tomlkit==0.15.0
+tomlkit==0.15.1
     # via
     #   -r requirements/validation.txt
     #   edx-lint
     #   pylint
-tox==4.56.1
+tox==4.56.4
     # via -r requirements/validation.txt
 twine==6.2.0
     # via -r requirements/validation.txt
@@ -682,7 +682,7 @@ urllib3==2.7.0
     #   requests
     #   responses
     #   twine
-virtualenv==21.5.1
+virtualenv==21.6.1
     # via
     #   -r requirements/validation.txt
     #   tox
