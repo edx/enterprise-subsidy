@@ -4,11 +4,11 @@
 #
 #    make upgrade
 #
-anyio==4.14.1
+anyio==4.14.2
     # via
     #   -r requirements/base.txt
     #   httpx
-asgiref==3.11.1
+asgiref==3.12.1
     # via
     #   -r requirements/base.txt
     #   django
@@ -42,12 +42,12 @@ certifi==2026.6.17
     #   httpcore
     #   httpx
     #   requests
-cffi==2.0.0
+cffi==2.1.0
     # via
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.7
+charset-normalizer==3.4.9
     # via
     #   -r requirements/base.txt
     #   requests
@@ -74,7 +74,7 @@ defusedxml==0.7.1
     #   -r requirements/base.txt
     #   python3-openid
     #   social-auth-core
-django==5.2.15
+django==5.2.16
     # via
     #   -r requirements/base.txt
     #   django-clearcache
@@ -114,7 +114,7 @@ django-extensions==4.1
     # via
     #   -r requirements/base.txt
     #   openedx-ledger
-django-filter==25.2
+django-filter==26.1
     # via
     #   -r requirements/base.txt
     #   openedx-ledger
@@ -157,7 +157,7 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/base.txt
     #   edx-drf-extensions
-drf-spectacular==0.29.0
+drf-spectacular==0.30.0
     # via -r requirements/base.txt
 drf-yasg==1.21.15
     # via -r requirements/base.txt
@@ -245,7 +245,7 @@ jinja2==3.1.6
     # via
     #   -r requirements/base.txt
     #   code-annotations
-joserfc==1.7.2
+joserfc==1.7.3
     # via
     #   -r requirements/base.txt
     #   authlib
