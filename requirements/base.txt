@@ -23,9 +23,9 @@ avro==1.12.1
     # via confluent-kafka
 backoff==2.2.1
     # via -r requirements/base.in
-cachetools==7.1.4
+cachetools==7.1.6
     # via confluent-kafka
-certifi==2026.6.17
+certifi==2026.7.22
     # via
     #   confluent-kafka
     #   httpcore
@@ -200,7 +200,7 @@ inflection==0.5.1
     #   drf-yasg
 jinja2==3.1.6
     # via code-annotations
-joserfc==1.7.3
+joserfc==1.7.4
     # via authlib
 jsonfield2==4.0.0.post0
     # via

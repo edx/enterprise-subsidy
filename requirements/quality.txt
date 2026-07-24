@@ -36,12 +36,12 @@ avro==1.12.1
     #   confluent-kafka
 backoff==2.2.1
     # via -r requirements/test.txt
-cachetools==7.1.4
+cachetools==7.1.6
     # via
     #   -r requirements/test.txt
     #   confluent-kafka
     #   tox
-certifi==2026.6.17
+certifi==2026.7.22
     # via
     #   -r requirements/test.txt
     #   confluent-kafka
@@ -251,7 +251,7 @@ edx-toggles==6.0.0
     #   edx-event-bus-kafka
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==40.31.0
+faker==40.35.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -260,7 +260,7 @@ fastavro==1.12.2
     #   -r requirements/test.txt
     #   confluent-kafka
     #   openedx-events
-filelock==3.30.2
+filelock==3.32.0
     # via
     #   -r requirements/test.txt
     #   python-discovery
@@ -316,7 +316,7 @@ jinja2==3.1.6
     # via
     #   -r requirements/test.txt
     #   code-annotations
-joserfc==1.7.3
+joserfc==1.7.4
     # via
     #   -r requirements/test.txt
     #   authlib
@@ -379,7 +379,7 @@ packaging==26.2
     #   pytest
     #   tox
     #   twine
-platformdirs==4.10.0
+platformdirs==4.11.0
     # via
     #   -r requirements/test.txt
     #   pylint
@@ -452,7 +452,7 @@ pynacl==1.6.2
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
-pyproject-api==1.10.1
+pyproject-api==1.11.0
     # via
     #   -r requirements/test.txt
     #   tox
@@ -467,7 +467,7 @@ pytest-django==4.12.0
     # via -r requirements/test.txt
 python-dateutil==2.9.0.post0
     # via -r requirements/test.txt
-python-discovery==1.4.4
+python-discovery==1.5.0
     # via
     #   -r requirements/test.txt
     #   tox
@@ -591,7 +591,7 @@ tomlkit==0.15.1
     #   -r requirements/test.txt
     #   edx-lint
     #   pylint
-tox==4.56.4
+tox==4.58.0
     # via -r requirements/test.txt
 twine==6.2.0
     # via -r requirements/quality.in
@@ -614,7 +614,7 @@ urllib3==2.7.0
     #   requests
     #   responses
     #   twine
-virtualenv==21.6.1
+virtualenv==21.7.0
     # via
     #   -r requirements/test.txt
     #   tox
