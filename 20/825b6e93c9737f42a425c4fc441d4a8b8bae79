@@ -1,0 +1,39 @@
+requirements/test.txt
+  s_83fcd8953b7cc9::t_292c37f0a01c8f 38,50,78,82,161,173,240,247,324,326,333,365,397,401,413,427,507,516,527
+requirements/pip-tools.txt
+  s_83fcd8953b7cc9::t_292c37f0a01c8f 11,16-18,23
+requirements/dev.txt
+  s_83fcd8953b7cc9::t_292c37f0a01c8f 43,55,60,90,94,111,121,159,187,199,272,281,414,416,431,477,523,527,540,559,661,663,672,685,689
+requirements/quality.txt
+  s_83fcd8953b7cc9::t_292c37f0a01c8f 39,51,82,86,109,171,183,254,263,372,374,382,424,465,469,482,498,593,595,604,617
+requirements/production.txt
+  s_83fcd8953b7cc9::t_292c37f0a01c8f 34,45,65,77,145,215,217,284,286,333,347
+requirements/pip.txt
+  s_83fcd8953b7cc9::t_292c37f0a01c8f 7,9,14-17
+requirements/doc.txt
+  s_83fcd8953b7cc9::t_292c37f0a01c8f 51,63,94,98,121,183,195,271,280,392,394,404,448,491,495,508,524,600,645,647,657,670
+requirements/validation.txt
+  s_83fcd8953b7cc9::t_292c37f0a01c8f 47,61,100,105,134,209,225,320,331,479,483,492,541,594,602,618,638,756,760,770,785
+requirements/base.txt
+  s_83fcd8953b7cc9::t_292c37f0a01c8f 26,34,48,58,125,229,231,258,269
+requirements/constraints.txt
+  s_83fcd8953b7cc9::t_d66608ae8c1eba 14-23
+requirements/ci.txt
+  s_83fcd8953b7cc9::t_292c37f0a01c8f 7,13,18,22,30,36,38-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "20825b6e93c9737f42a425c4fc441d4a8b8bae79",
+  "prompts": {},
+  "sessions": {
+    "s_83fcd8953b7cc9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dae91fc7-3b82-44d7-a05c-f4c33c2f2403",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": null
+    }
+  }
+}
