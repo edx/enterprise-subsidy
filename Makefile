@@ -114,10 +114,7 @@ $(COMMON_CONSTRAINTS_TXT):
 
 upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
 upgrade: $(COMMON_CONSTRAINTS_TXT) ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
-	# pip-tools 7.6.0 (pinned in requirements/constraints.txt) is incompatible with
-	# pip 26.2+; downgrade pip itself before the first pip-compile call, since pip
-	# is excluded from requirements/pip-tools.txt (it's in the "unsafe" package list).
-	pip install -q "pip<26.2"
+	pip install -q -c requirements/constraints.txt pip
 	pip install -qr requirements/pip-tools.txt -c requirements/constraints.txt
 	# Make sure to compile files after any other files they include!
 	$(PIP_COMPILE) --allow-unsafe -o requirements/pip.txt requirements/pip.in
