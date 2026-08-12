@@ -1,0 +1,19 @@
+Makefile
+  s_83fcd8953b7cc9::t_dff1b9650f402e 117
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "b3d11d5786957105ca13ea8572bc74473aa0a50b",
+  "prompts": {},
+  "sessions": {
+    "s_83fcd8953b7cc9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dae91fc7-3b82-44d7-a05c-f4c33c2f2403",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "tsunkara-sonata <tsunkara-sonata@2u.com>"
+    }
+  }
+}
