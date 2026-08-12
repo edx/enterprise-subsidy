@@ -23,7 +23,7 @@ avro==1.12.1
     # via confluent-kafka
 backoff==2.2.1
     # via -r requirements/base.in
-cachetools==7.1.6
+cachetools==7.1.7
     # via confluent-kafka
 certifi==2026.7.22
     # via
@@ -31,7 +31,7 @@ certifi==2026.7.22
     #   httpcore
     #   httpx
     #   requests
-cffi==2.1.0
+cffi==2.1.1
     # via
     #   cryptography
     #   pynacl
@@ -45,7 +45,7 @@ code-annotations==3.0.0
     # via edx-toggles
 confluent-kafka[avro,schema-registry]==2.15.0
     # via -r requirements/base.in
-cryptography==49.0.0
+cryptography==50.0.0
     # via
     #   authlib
     #   joserfc
@@ -55,7 +55,7 @@ defusedxml==0.7.1
     # via
     #   python3-openid
     #   social-auth-core
-django==5.2.16
+django==5.2.17
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/base.in
@@ -122,7 +122,7 @@ djangoql==0.19.1
     # via
     #   -r requirements/base.in
     #   openedx-ledger
-djangorestframework==3.17.1
+djangorestframework==3.18.0
     # via
     #   -r requirements/base.in
     #   drf-jwt
@@ -226,9 +226,9 @@ openedx-events==11.2.0
     #   -r requirements/base.in
     #   edx-event-bus-kafka
     #   openedx-ledger
-openedx-ledger==1.8.0
+openedx-ledger==2.0.0
     # via -r requirements/base.in
-packaging==26.2
+packaging==26.3
     # via drf-yasg
 ply==3.11
     # via djangoql
@@ -255,7 +255,7 @@ python-slugify==8.0.4
     # via code-annotations
 python3-openid==3.2.0
     # via social-auth-core
-pytz==2026.2
+pytz==2026.3.post1
     # via
     #   drf-yasg
     #   getsmarter-api-clients
@@ -266,7 +266,7 @@ pyyaml==6.0.3
     #   drf-spectacular
     #   drf-yasg
     #   edx-django-release-util
-redis==8.0.1
+redis==8.1.0
     # via openedx-ledger
 referencing==0.37.0
     # via

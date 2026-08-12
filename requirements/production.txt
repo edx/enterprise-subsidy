@@ -31,7 +31,7 @@ avro==1.12.1
     #   confluent-kafka
 backoff==2.2.1
     # via -r requirements/base.txt
-cachetools==7.1.6
+cachetools==7.1.7
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
@@ -42,7 +42,7 @@ certifi==2026.7.22
     #   httpcore
     #   httpx
     #   requests
-cffi==2.1.0
+cffi==2.1.1
     # via
     #   -r requirements/base.txt
     #   cryptography
@@ -62,7 +62,7 @@ code-annotations==3.0.0
     #   edx-toggles
 confluent-kafka[avro,schema-registry]==2.15.0
     # via -r requirements/base.txt
-cryptography==49.0.0
+cryptography==50.0.0
     # via
     #   -r requirements/base.txt
     #   authlib
@@ -74,7 +74,7 @@ defusedxml==0.7.1
     #   -r requirements/base.txt
     #   python3-openid
     #   social-auth-core
-django==5.2.16
+django==5.2.17
     # via
     #   -r requirements/base.txt
     #   django-clearcache
@@ -142,7 +142,7 @@ djangoql==0.19.1
     # via
     #   -r requirements/base.txt
     #   openedx-ledger
-djangorestframework==3.17.1
+djangorestframework==3.18.0
     # via
     #   -r requirements/base.txt
     #   drf-jwt
@@ -212,9 +212,9 @@ fastavro==1.12.2
     #   openedx-events
 getsmarter-api-clients==0.6.3
     # via -r requirements/base.txt
-gevent==26.7.0
+gevent==26.8.0
     # via -r requirements/production.in
-greenlet==3.5.4
+greenlet==3.5.5
     # via gevent
 gunicorn==26.0.0
     # via -r requirements/production.in
@@ -281,9 +281,9 @@ openedx-events==11.2.0
     #   -r requirements/base.txt
     #   edx-event-bus-kafka
     #   openedx-ledger
-openedx-ledger==1.8.0
+openedx-ledger==2.0.0
     # via -r requirements/base.txt
-packaging==26.2
+packaging==26.3
     # via
     #   -r requirements/base.txt
     #   drf-yasg
@@ -330,7 +330,7 @@ python3-openid==3.2.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-pytz==2026.2
+pytz==2026.3.post1
     # via
     #   -r requirements/base.txt
     #   drf-yasg
@@ -344,7 +344,7 @@ pyyaml==6.0.3
     #   drf-spectacular
     #   drf-yasg
     #   edx-django-release-util
-redis==8.0.1
+redis==8.1.0
     # via
     #   -r requirements/base.txt
     #   openedx-ledger
