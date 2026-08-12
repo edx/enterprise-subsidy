@@ -1,0 +1,21 @@
+requirements/doc.txt
+  s_83fcd8953b7cc9::t_167cfcbf53d629 592,598
+Makefile
+  s_83fcd8953b7cc9::t_db4a2927da934f 117-120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "5beb979c3d7d30a8e9cad5d4e7fd4d658c2f7961",
+  "prompts": {},
+  "sessions": {
+    "s_83fcd8953b7cc9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dae91fc7-3b82-44d7-a05c-f4c33c2f2403",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "tsunkara-sonata <tsunkara-sonata@2u.com>"
+    }
+  }
+}
