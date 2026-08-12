@@ -411,7 +411,7 @@ openedx-events==11.2.0
     #   -r requirements/validation.txt
     #   edx-event-bus-kafka
     #   openedx-ledger
-openedx-ledger==2.0.0
+openedx-ledger==1.8.0
     # via -r requirements/validation.txt
 packaging==26.3
     # via

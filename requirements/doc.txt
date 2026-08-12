@@ -389,8 +389,10 @@ openedx-events==11.2.0
     #   -r requirements/test.txt
     #   edx-event-bus-kafka
     #   openedx-ledger
-openedx-ledger==2.0.0
-    # via -r requirements/test.txt
+openedx-ledger==1.8.0
+    # via
+    #   -c requirements/constraints.txt
+    #   -r requirements/test.txt
 packaging==26.3
     # via
     #   -r requirements/test.txt

@@ -226,8 +226,10 @@ openedx-events==11.2.0
     #   -r requirements/base.in
     #   edx-event-bus-kafka
     #   openedx-ledger
-openedx-ledger==2.0.0
-    # via -r requirements/base.in
+openedx-ledger==1.8.0
+    # via
+    #   -c requirements/constraints.txt
+    #   -r requirements/base.in
 packaging==26.3
     # via drf-yasg
 ply==3.11
