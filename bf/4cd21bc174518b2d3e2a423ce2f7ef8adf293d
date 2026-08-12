@@ -1,0 +1,33 @@
+requirements/base.txt
+  s_83fcd8953b7cc9::t_2d7510561a41b8 229-232
+requirements/validation.txt
+  s_83fcd8953b7cc9::t_2d7510561a41b8 479
+requirements/constraints.txt
+  s_83fcd8953b7cc9::t_88814aea563791 27-32
+requirements/quality.txt
+  s_83fcd8953b7cc9::t_2d7510561a41b8 372-375
+requirements/test.txt
+  s_83fcd8953b7cc9::t_2d7510561a41b8 324-327
+requirements/production.txt
+  s_83fcd8953b7cc9::t_2d7510561a41b8 284
+requirements/dev.txt
+  s_83fcd8953b7cc9::t_2d7510561a41b8 414
+requirements/doc.txt
+  s_83fcd8953b7cc9::t_2d7510561a41b8 392-395
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "bf4cd21bc174518b2d3e2a423ce2f7ef8adf293d",
+  "prompts": {},
+  "sessions": {
+    "s_83fcd8953b7cc9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dae91fc7-3b82-44d7-a05c-f4c33c2f2403",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "tsunkara-sonata <tsunkara-sonata@2u.com>"
+    }
+  }
+}
