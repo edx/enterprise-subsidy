@@ -64,7 +64,7 @@ cffi==2.1.1
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.9
+charset-normalizer==3.5.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -328,7 +328,7 @@ fastavro==1.12.2
     #   -r requirements/test.txt
     #   confluent-kafka
     #   openedx-events
-filelock==3.32.2
+filelock==3.32.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -489,7 +489,7 @@ packaging==26.3
     #   pytest
     #   tox
     #   twine
-platformdirs==4.11.2
+platformdirs==4.11.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -599,7 +599,7 @@ python-dateutil==2.9.0.post0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-python-discovery==1.5.1
+python-discovery==1.5.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -725,7 +725,7 @@ social-auth-core==4.9.1
     #   -r requirements/test.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sqlparse==0.5.5
+sqlparse==0.6.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -753,7 +753,7 @@ tomlkit==0.15.1
     #   -r requirements/test.txt
     #   edx-lint
     #   pylint
-tox==4.59.0
+tox==4.60.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt

@@ -47,7 +47,7 @@ cffi==2.1.1
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.9
+charset-normalizer==3.5.0
     # via
     #   -r requirements/base.txt
     #   requests
@@ -396,7 +396,7 @@ social-auth-core==4.9.1
     #   -r requirements/base.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sqlparse==0.5.5
+sqlparse==0.6.0
     # via
     #   -r requirements/base.txt
     #   django
