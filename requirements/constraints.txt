@@ -11,8 +11,24 @@
 # Common constraints for edx repos
 -c common_constraints.txt
 
+# pip 26.2+ is incompatible with pip-tools 7.6.0 (latest pip-tools release only
+# supports pip up to 26.1), which breaks `make upgrade`. Remove this once a
+# newer pip-tools release restores pip 26.2+ compatibility.
+pip<26.2
+
+# Pin pip-tools to the version verified compatible with the pip<26.2 constraint
+# above; a newer pip-tools release could require a newer pip and reintroduce
+# the `make upgrade` breakage this constraint set was added to fix.
+pip-tools==7.6.0
+
 # django-simple-history>3.4.0 for this repo... we were not concerned about migration issues
 django-simple-history>=3.4.0,<3.5.0
+
+# openedx-ledger 2.0.0 is a major-version release with potential breaking changes to
+# ledger/transaction behavior. Pin to the 1.x series here so this requirements upgrade
+# stays scoped to the pip/pip-tools compatibility fix; upgrade to 2.x in a dedicated PR
+# with targeted verification.
+openedx-ledger<2.0.0
 
 # pinning social-auth-* packages to the latest working versions. Remove these pins
 # when this ticket gets resolved: https://2u-internal.atlassian.net/browse/ENT-12017
