@@ -26,17 +26,17 @@ attrs==26.1.0
     #   jsonschema
     #   openedx-events
     #   referencing
-authlib==1.7.2
+authlib==1.8.0
     # via
     #   -r requirements/test.txt
     #   confluent-kafka
-avro==1.12.1
+avro==1.12.2
     # via
     #   -r requirements/test.txt
     #   confluent-kafka
 backoff==2.2.1
     # via -r requirements/test.txt
-cachetools==7.1.6
+cachetools==7.1.7
     # via
     #   -r requirements/test.txt
     #   confluent-kafka
@@ -48,16 +48,16 @@ certifi==2026.7.22
     #   httpcore
     #   httpx
     #   requests
-cffi==2.1.0
+cffi==2.1.1
     # via
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.4.9
+charset-normalizer==3.5.1
     # via
     #   -r requirements/test.txt
     #   requests
-click==8.4.2
+click==8.5.0
     # via
     #   -r requirements/test.txt
     #   click-log
@@ -79,17 +79,16 @@ colorama==0.4.6
     #   tox
 confluent-kafka[avro,schema-registry]==2.15.0
     # via -r requirements/test.txt
-coverage[toml]==7.15.2
+coverage[toml]==7.16.0
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==49.0.0
+cryptography==50.0.1
     # via
     #   -r requirements/test.txt
     #   authlib
     #   joserfc
     #   pyjwt
-    #   secretstorage
     #   social-auth-core
 ddt==1.7.2
     # via -r requirements/test.txt
@@ -106,7 +105,7 @@ distlib==0.4.3
     # via
     #   -r requirements/test.txt
     #   virtualenv
-django==5.2.16
+django==5.2.17
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test.txt
@@ -168,7 +167,7 @@ django-simple-history==3.4.0
     #   -c requirements/constraints.txt
     #   -r requirements/test.txt
     #   openedx-ledger
-django-test-migrations==1.5.0
+django-test-migrations==1.6.0
     # via -r requirements/test.txt
 django-waffle==5.0.0
     # via
@@ -180,7 +179,7 @@ djangoql==0.19.1
     # via
     #   -r requirements/test.txt
     #   openedx-ledger
-djangorestframework==3.17.1
+djangorestframework==3.18.0
     # via
     #   -r requirements/test.txt
     #   drf-jwt
@@ -211,7 +210,7 @@ edx-django-release-util==1.5.0
     # via
     #   -r requirements/test.txt
     #   openedx-ledger
-edx-django-utils==8.0.1
+edx-django-utils==8.0.2
     # via
     #   -r requirements/test.txt
     #   edx-auth-backends
@@ -222,7 +221,7 @@ edx-django-utils==8.0.1
     #   getsmarter-api-clients
     #   openedx-events
     #   openedx-ledger
-edx-drf-extensions==10.6.0
+edx-drf-extensions==10.7.0
     # via
     #   -r requirements/test.txt
     #   edx-rbac
@@ -251,7 +250,7 @@ edx-toggles==6.0.0
     #   edx-event-bus-kafka
 factory-boy==3.3.3
     # via -r requirements/test.txt
-faker==40.35.0
+faker==40.37.0
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -260,7 +259,7 @@ fastavro==1.12.2
     #   -r requirements/test.txt
     #   confluent-kafka
     #   openedx-events
-filelock==3.32.0
+filelock==3.32.4
     # via
     #   -r requirements/test.txt
     #   python-discovery
@@ -282,7 +281,7 @@ httpx==0.28.1
     #   confluent-kafka
 id==1.6.1
     # via twine
-idna==3.18
+idna==3.19
     # via
     #   -r requirements/test.txt
     #   anyio
@@ -297,7 +296,7 @@ iniconfig==2.3.0
     # via
     #   -r requirements/test.txt
     #   pytest
-isort==8.0.1
+isort==9.0.1
     # via
     #   -r requirements/quality.in
     #   -r requirements/test.txt
@@ -308,15 +307,11 @@ jaraco-context==6.1.2
     # via keyring
 jaraco-functools==4.6.0
     # via keyring
-jeepney==0.9.0
-    # via
-    #   keyring
-    #   secretstorage
 jinja2==3.1.6
     # via
     #   -r requirements/test.txt
     #   code-annotations
-joserfc==1.7.4
+joserfc==1.7.5
     # via
     #   -r requirements/test.txt
     #   authlib
@@ -352,11 +347,15 @@ more-itertools==11.1.0
     # via
     #   jaraco-classes
     #   jaraco-functools
+mypy-extensions==1.1.0
+    # via
+    #   -r requirements/test.txt
+    #   isort
 mysqlclient==2.2.8
     # via
     #   -r requirements/test.txt
     #   openedx-ledger
-nh3==0.3.6
+nh3==0.3.7
     # via readme-renderer
 oauthlib==3.3.1
     # via
@@ -369,9 +368,9 @@ openedx-events==11.2.0
     #   -r requirements/test.txt
     #   edx-event-bus-kafka
     #   openedx-ledger
-openedx-ledger==1.8.0
+openedx-ledger==2.0.0
     # via -r requirements/test.txt
-packaging==26.2
+packaging==26.3
     # via
     #   -r requirements/test.txt
     #   drf-yasg
@@ -379,11 +378,10 @@ packaging==26.2
     #   pytest
     #   tox
     #   twine
-platformdirs==4.11.0
+platformdirs==4.11.5
     # via
     #   -r requirements/test.txt
     #   pylint
-    #   python-discovery
     #   tox
     #   virtualenv
 pluggy==1.6.0
@@ -408,7 +406,7 @@ pycparser==3.0
     #   cffi
 pydocstyle==6.3.0
     # via -r requirements/quality.in
-pygments==2.20.0
+pygments==2.21.0
     # via
     #   -r requirements/test.txt
     #   pytest
@@ -422,7 +420,7 @@ pyjwt[crypto]==2.13.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==4.0.6
+pylint==4.0.8
     # via
     #   -r requirements/test.txt
     #   edx-lint
@@ -463,11 +461,11 @@ pytest==9.1.1
     #   pytest-django
 pytest-cov==7.1.0
     # via -r requirements/test.txt
-pytest-django==4.12.0
+pytest-django==4.14.0
     # via -r requirements/test.txt
 python-dateutil==2.9.0.post0
     # via -r requirements/test.txt
-python-discovery==1.5.0
+python-discovery==1.6.0
     # via
     #   -r requirements/test.txt
     #   tox
@@ -480,7 +478,7 @@ python3-openid==3.2.0
     # via
     #   -r requirements/test.txt
     #   social-auth-core
-pytz==2026.2
+pytz==2026.3.post1
     # via
     #   -r requirements/test.txt
     #   drf-yasg
@@ -494,9 +492,9 @@ pyyaml==6.0.3
     #   drf-yasg
     #   edx-django-release-util
     #   responses
-readme-renderer==45.0
+readme-renderer==46.0
     # via twine
-redis==8.0.1
+redis==8.1.0
     # via
     #   -r requirements/test.txt
     #   openedx-ledger
@@ -523,7 +521,7 @@ requests-oauthlib==2.0.0
     #   social-auth-core
 requests-toolbelt==1.0.0
     # via twine
-responses==0.26.2
+responses==0.26.3
     # via -r requirements/test.txt
 rfc3986==2.0.0
     # via twine
@@ -538,8 +536,6 @@ rules==3.5
     # via
     #   -r requirements/test.txt
     #   openedx-ledger
-secretstorage==3.5.0
-    # via keyring
 semantic-version==2.10.0
     # via
     #   -r requirements/test.txt
@@ -568,11 +564,11 @@ social-auth-core==4.9.1
     #   -r requirements/test.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sqlparse==0.5.5
+sqlparse==0.6.0
     # via
     #   -r requirements/test.txt
     #   django
-stevedore==5.9.0
+stevedore==5.9.1
     # via
     #   -r requirements/test.txt
     #   code-annotations
@@ -591,9 +587,9 @@ tomlkit==0.15.1
     #   -r requirements/test.txt
     #   edx-lint
     #   pylint
-tox==4.58.0
+tox==4.61.1
     # via -r requirements/test.txt
-twine==6.2.0
+twine==7.0.0
     # via -r requirements/quality.in
 typing-extensions==4.16.0
     # via
@@ -602,6 +598,7 @@ typing-extensions==4.16.0
     #   django-test-migrations
     #   edx-opaque-keys
     #   referencing
+    #   tox
 uritemplate==4.2.0
     # via
     #   -r requirements/test.txt
@@ -614,7 +611,7 @@ urllib3==2.7.0
     #   requests
     #   responses
     #   twine
-virtualenv==21.7.0
+virtualenv==21.7.7
     # via
     #   -r requirements/test.txt
     #   tox
