@@ -38,7 +38,7 @@ requirements: dev_requirements ## sync to default requirements
 ci_requirements: validation_requirements ## sync to requirements needed for CI checks
 
 pip_requirements:  ## install pip-sync
-	pip install -r requirements/pip-tools.txt -c requirements/constraints.txt
+	pip install -q -r requirements/pip.txt -r requirements/pip-tools.txt -c requirements/constraints.txt
 
 dev_requirements: pip_requirements ## sync to requirements for local development
 	pip-sync -q requirements/dev.txt requirements/private.* requirements/test.txt
@@ -70,7 +70,7 @@ isort_check: ## check that isort has been run
 	isort --check-only enterprise_subsidy/
 
 isort: ## run isort to sort imports in all Python files
-	isort --recursive --atomic enterprise_subsidy/
+	isort --atomic enterprise_subsidy/
 
 style: ## run Python style checker
 	pycodestyle enterprise_subsidy manage.py
@@ -113,8 +113,7 @@ $(COMMON_CONSTRAINTS_TXT):
 	echo "$(COMMON_CONSTRAINTS_TEMP_COMMENT)" | cat - $(@) > temp && mv temp $(@)
 
 upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
-upgrade: $(COMMON_CONSTRAINTS_TXT) ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
-	pip install -qr requirements/pip-tools.txt -c requirements/constraints.txt
+upgrade: pip_requirements $(COMMON_CONSTRAINTS_TXT) ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
 	# Make sure to compile files after any other files they include!
 	$(PIP_COMPILE) --allow-unsafe -o requirements/pip.txt requirements/pip.in
 	$(PIP_COMPILE) -o requirements/pip-tools.txt requirements/pip-tools.in
