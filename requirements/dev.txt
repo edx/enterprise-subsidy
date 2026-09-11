@@ -4,7 +4,7 @@
 #
 #    make upgrade
 #
-anyio==4.15.0
+anyio==4.15.1
     # via
     #   -r requirements/validation.txt
     #   httpx
@@ -36,7 +36,7 @@ avro==1.12.2
     #   confluent-kafka
 backoff==2.2.1
     # via -r requirements/validation.txt
-build==1.6.0
+build==1.6.1
     # via
     #   -r requirements/pip-tools.txt
     #   pip-tools
@@ -85,7 +85,7 @@ colorama==0.4.6
     # via
     #   -r requirements/validation.txt
     #   tox
-confluent-kafka[avro,schema-registry]==2.15.0
+confluent-kafka[avro,schema-registry]==2.15.1
     # via -r requirements/validation.txt
 coverage[toml]==7.16.0
     # via
@@ -196,7 +196,7 @@ djangoql==0.19.1
     # via
     #   -r requirements/validation.txt
     #   openedx-ledger
-djangorestframework==3.18.0
+djangorestframework==3.18.1
     # via
     #   -r requirements/validation.txt
     #   drf-jwt
@@ -278,7 +278,7 @@ fastavro==1.12.2
     #   -r requirements/validation.txt
     #   confluent-kafka
     #   openedx-events
-filelock==3.32.5
+filelock==3.32.6
     # via
     #   -r requirements/validation.txt
     #   python-discovery
@@ -432,7 +432,7 @@ path==16.16.0
     # via edx-i18n-tools
 pip-tools==7.6.1
     # via -r requirements/pip-tools.txt
-platformdirs==4.11.7
+platformdirs==4.11.8
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -500,7 +500,7 @@ pylint-plugin-utils==0.9.0
     #   pylint-django
 pymemcache==4.0.0
     # via -r requirements/validation.txt
-pymongo==4.18.0
+pymongo==4.18.1
     # via
     #   -r requirements/validation.txt
     #   edx-opaque-keys
@@ -533,7 +533,7 @@ python-discovery==1.6.0
     #   -r requirements/validation.txt
     #   tox
     #   virtualenv
-python-slugify==8.0.4
+python-slugify==9.0.0
     # via
     #   -r requirements/validation.txt
     #   code-annotations
@@ -662,7 +662,7 @@ tomlkit==0.15.1
     #   -r requirements/validation.txt
     #   edx-lint
     #   pylint
-tox==4.61.2
+tox==4.61.4
     # via -r requirements/validation.txt
 twine==7.0.0
     # via -r requirements/validation.txt
@@ -686,7 +686,7 @@ urllib3==2.7.0
     #   requests
     #   responses
     #   twine
-virtualenv==21.7.8
+virtualenv==21.7.9
     # via
     #   -r requirements/validation.txt
     #   tox
