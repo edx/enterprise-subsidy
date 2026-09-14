@@ -4,7 +4,7 @@
 #
 #    make upgrade
 #
-anyio==4.15.0
+anyio==4.15.1
     # via
     #   -r requirements/base.txt
     #   httpx
@@ -73,7 +73,7 @@ code-annotations==3.0.0
     #   edx-toggles
 colorama==0.4.6
     # via tox
-confluent-kafka[avro,schema-registry]==2.15.0
+confluent-kafka[avro,schema-registry]==2.15.1
     # via -r requirements/base.txt
 coverage[toml]==7.16.0
     # via
@@ -170,7 +170,7 @@ djangoql==0.19.1
     # via
     #   -r requirements/base.txt
     #   openedx-ledger
-djangorestframework==3.18.0
+djangorestframework==3.18.1
     # via
     #   -r requirements/base.txt
     #   drf-jwt
@@ -244,7 +244,7 @@ fastavro==1.12.2
     #   -r requirements/base.txt
     #   confluent-kafka
     #   openedx-events
-filelock==3.32.5
+filelock==3.32.6
     # via
     #   python-discovery
     #   tox
@@ -332,7 +332,7 @@ packaging==26.3
     #   pyproject-api
     #   pytest
     #   tox
-platformdirs==4.11.7
+platformdirs==4.11.8
     # via
     #   pylint
     #   tox
@@ -380,7 +380,7 @@ pylint-plugin-utils==0.9.0
     #   pylint-django
 pymemcache==4.0.0
     # via -r requirements/base.txt
-pymongo==4.18.0
+pymongo==4.18.1
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
@@ -404,7 +404,7 @@ python-discovery==1.6.0
     # via
     #   tox
     #   virtualenv
-python-slugify==8.0.4
+python-slugify==9.0.0
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -506,7 +506,7 @@ tomlkit==0.15.1
     # via
     #   edx-lint
     #   pylint
-tox==4.61.2
+tox==4.61.4
     # via -r requirements/test.in
 typing-extensions==4.16.0
     # via
@@ -526,7 +526,7 @@ urllib3==2.7.0
     #   -r requirements/base.txt
     #   requests
     #   responses
-virtualenv==21.7.8
+virtualenv==21.7.9
     # via tox
 
 # The following packages are considered to be unsafe in a requirements file:

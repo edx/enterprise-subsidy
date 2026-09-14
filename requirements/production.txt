@@ -4,7 +4,7 @@
 #
 #    make upgrade
 #
-anyio==4.15.0
+anyio==4.15.1
     # via
     #   -r requirements/base.txt
     #   httpx
@@ -60,7 +60,7 @@ code-annotations==3.0.0
     # via
     #   -r requirements/base.txt
     #   edx-toggles
-confluent-kafka[avro,schema-registry]==2.15.0
+confluent-kafka[avro,schema-registry]==2.15.1
     # via -r requirements/base.txt
 cryptography==50.0.1
     # via
@@ -142,7 +142,7 @@ djangoql==0.19.1
     # via
     #   -r requirements/base.txt
     #   openedx-ledger
-djangorestframework==3.18.0
+djangorestframework==3.18.1
     # via
     #   -r requirements/base.txt
     #   drf-jwt
@@ -309,7 +309,7 @@ pyjwt[crypto]==2.13.0
     #   social-auth-core
 pymemcache==4.0.0
     # via -r requirements/base.txt
-pymongo==4.18.0
+pymongo==4.18.1
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
@@ -321,7 +321,7 @@ python-dateutil==2.9.0.post0
     # via -r requirements/base.txt
 python-memcached==1.62
     # via -r requirements/production.in
-python-slugify==8.0.4
+python-slugify==9.0.0
     # via
     #   -r requirements/base.txt
     #   code-annotations
