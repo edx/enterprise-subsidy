@@ -31,7 +31,7 @@ avro==1.12.2
     #   confluent-kafka
 backoff==2.2.1
     # via -r requirements/base.txt
-cachetools==7.1.8
+cachetools==7.2.0
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
@@ -182,7 +182,7 @@ edx-django-utils==8.0.2
     #   getsmarter-api-clients
     #   openedx-events
     #   openedx-ledger
-edx-drf-extensions==10.8.0
+edx-drf-extensions==10.9.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
@@ -212,9 +212,9 @@ fastavro==1.12.2
     #   openedx-events
 getsmarter-api-clients==0.6.3
     # via -r requirements/base.txt
-gevent==26.8.0
+gevent==26.9.0
     # via -r requirements/production.in
-greenlet==3.5.5
+greenlet==3.5.6
     # via gevent
 gunicorn==26.2.0
     # via -r requirements/production.in
@@ -230,7 +230,7 @@ httpx==0.28.1
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
-idna==3.19
+idna==3.20
     # via
     #   -r requirements/base.txt
     #   anyio
@@ -265,7 +265,7 @@ markupsafe==3.0.3
     # via
     #   -r requirements/base.txt
     #   jinja2
-mysqlclient==2.2.8
+mysqlclient==2.3.0
     # via
     #   -r requirements/base.txt
     #   -r requirements/production.in
@@ -299,7 +299,7 @@ pycparser==3.0
     # via
     #   -r requirements/base.txt
     #   cffi
-pyjwt[crypto]==2.13.0
+pyjwt[crypto]==2.14.0
     # via
     #   -r requirements/base.txt
     #   drf-jwt
@@ -420,7 +420,7 @@ uritemplate==4.2.0
     #   -r requirements/base.txt
     #   drf-spectacular
     #   drf-yasg
-urllib3==2.7.0
+urllib3==2.8.0
     # via
     #   -r requirements/base.txt
     #   requests
