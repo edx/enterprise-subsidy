@@ -2,8 +2,13 @@
 Defines django-filter/DRF FilterSets
 for our API views.
 """
+from datetime import datetime
+
+from django.core.exceptions import ValidationError
 from django_filters import filters
 from django_filters import rest_framework as drf_filters
+from django.utils import timezone
+from django.utils.dateparse import parse_date, parse_datetime
 from openedx_ledger.models import Transaction, TransactionStateChoices
 
 
@@ -37,6 +42,31 @@ class TransactionAdminFilterSet(HelpfulFilterSet):
         field_name='state',
         choices=TransactionStateChoices.CHOICES,
     )
+    start_date = filters.CharFilter(method='filter_start_date')
+    end_date = filters.CharFilter(method='filter_end_date')
+    created__gte = filters.CharFilter(method='filter_start_date')
+    created__lte = filters.CharFilter(method='filter_end_date')
+
+    @staticmethod
+    def _parse_date(value, end_of_day=False):
+        parsed_datetime = parse_datetime(value)
+        if parsed_datetime is None:
+            parsed_date = parse_date(value)
+            if parsed_date is None:
+                raise ValidationError(f'{value} is not a valid ISO date or datetime.')
+            parsed_datetime = datetime.combine(
+                parsed_date,
+                datetime.max.time() if end_of_day else datetime.min.time(),
+            )
+        if timezone.is_naive(parsed_datetime):
+            parsed_datetime = timezone.make_aware(parsed_datetime)
+        return parsed_datetime
+
+    def filter_start_date(self, queryset, name, value):
+        return queryset.filter(created__gte=self._parse_date(value))
+
+    def filter_end_date(self, queryset, name, value):
+        return queryset.filter(created__lte=self._parse_date(value, end_of_day=True))
 
     class Meta:
         model = Transaction
