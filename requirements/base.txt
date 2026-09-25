@@ -171,7 +171,7 @@ edx-rbac==3.0.0
     # via
     #   -r requirements/base.in
     #   openedx-ledger
-edx-rest-api-client==7.0.0
+edx-rest-api-client==7.1.0
     # via -r requirements/base.in
 edx-toggles==6.0.0
     # via
@@ -238,7 +238,7 @@ psutil==7.2.2
     # via edx-django-utils
 pycparser==3.0
     # via cffi
-pyjwt[crypto]==2.14.0
+pyjwt[crypto]==2.15.0
     # via
     #   drf-jwt
     #   edx-auth-backends
@@ -247,17 +247,17 @@ pyjwt[crypto]==2.14.0
     #   social-auth-core
 pymemcache==4.0.0
     # via -r requirements/base.in
-pymongo==4.18.1
+pymongo==4.18.2
     # via edx-opaque-keys
 pynacl==1.6.2
     # via edx-django-utils
 python-dateutil==2.9.0.post0
     # via -r requirements/base.in
-python-slugify==9.0.0
+python-slugify==9.1.1
     # via code-annotations
 python3-openid==3.2.0
     # via social-auth-core
-pytz==2026.3.post1
+pytz==2026.4
     # via
     #   drf-yasg
     #   getsmarter-api-clients
