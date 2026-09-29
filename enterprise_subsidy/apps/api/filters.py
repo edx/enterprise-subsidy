@@ -4,12 +4,12 @@ for our API views.
 """
 from datetime import datetime
 
-from django.core.exceptions import ValidationError
-from django_filters import filters
-from django_filters import rest_framework as drf_filters
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
+from django_filters import filters
+from django_filters import rest_framework as drf_filters
 from openedx_ledger.models import Transaction, TransactionStateChoices
+from rest_framework.exceptions import ValidationError
 
 
 class HelpfulFilterSet(drf_filters.FilterSet):
@@ -42,18 +42,31 @@ class TransactionAdminFilterSet(HelpfulFilterSet):
         field_name='state',
         choices=TransactionStateChoices.CHOICES,
     )
-    start_date = filters.CharFilter(method='filter_start_date')
-    end_date = filters.CharFilter(method='filter_end_date')
-    created__gte = filters.CharFilter(method='filter_start_date')
-    created__lte = filters.CharFilter(method='filter_end_date')
+    start_date = filters.CharFilter(
+        method='filter_start_date',
+        help_text='Only include transactions created on/after this ISO date or datetime (a date means 00:00:00).',
+    )
+    end_date = filters.CharFilter(
+        method='filter_end_date',
+        help_text='Only include transactions created on/before this ISO date or datetime (a date means 23:59:59).',
+    )
 
     @staticmethod
     def _parse_date(value, end_of_day=False):
-        parsed_datetime = parse_datetime(value)
+        """
+        Parse an ISO date or datetime into an aware datetime; bare dates snap to the start or end of that day.
+        """
+        # Raise DRF's ValidationError (not Django's) so an invalid value surfaces as a 400, not a 500.
+        invalid_value_error = ValidationError({'detail': f'{value} is not a valid ISO date or datetime.'})
+        try:
+            # parse_date/parse_datetime raise ValueError for well-formed but impossible values like 2024-02-30.
+            parsed_datetime = parse_datetime(value)
+            parsed_date = parse_date(value) if parsed_datetime is None else None
+        except ValueError as exc:
+            raise invalid_value_error from exc
         if parsed_datetime is None:
-            parsed_date = parse_date(value)
             if parsed_date is None:
-                raise ValidationError(f'{value} is not a valid ISO date or datetime.')
+                raise invalid_value_error
             parsed_datetime = datetime.combine(
                 parsed_date,
                 datetime.max.time() if end_of_day else datetime.min.time(),
