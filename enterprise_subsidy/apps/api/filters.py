@@ -75,10 +75,10 @@ class TransactionAdminFilterSet(HelpfulFilterSet):
             parsed_datetime = timezone.make_aware(parsed_datetime)
         return parsed_datetime
 
-    def filter_start_date(self, queryset, name, value):
+    def filter_start_date(self, queryset, name, value):  # pylint: disable=unused-argument
         return queryset.filter(created__gte=self._parse_date(value))
 
-    def filter_end_date(self, queryset, name, value):
+    def filter_end_date(self, queryset, name, value):  # pylint: disable=unused-argument
         return queryset.filter(created__lte=self._parse_date(value, end_of_day=True))
 
     class Meta:
