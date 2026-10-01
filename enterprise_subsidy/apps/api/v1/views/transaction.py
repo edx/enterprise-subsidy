@@ -1,22 +1,28 @@
 """
 Views for the enterprise-subsidy service relating to the Transaction model
 """
+import csv
 import logging
+from io import StringIO
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils.decorators import method_decorator
+from django_filters import rest_framework as drf_filters
 from drf_spectacular.utils import extend_schema
 from edx_rbac.mixins import PermissionRequiredForListingMixin
 from edx_rbac.utils import ALL_ACCESS_CONTEXT, contexts_accessible_from_jwt
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
-from openedx_ledger.models import LedgerLockAttemptFailed, Transaction
+from openedx_ledger.models import LedgerLockAttemptFailed, Transaction, TransactionStateChoices, UnitChoices
 from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
+from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError
+from rest_framework.renderers import BaseRenderer, JSONRenderer
 from rest_framework.response import Response
 
+from enterprise_subsidy.apps.api.filters import TransactionAdminFilterSet
 from enterprise_subsidy.apps.api.paginators import TransactionListPaginator
 from enterprise_subsidy.apps.api.v1 import utils
 from enterprise_subsidy.apps.api.v1.decorators import require_at_least_one_query_parameter
@@ -36,6 +42,87 @@ from enterprise_subsidy.apps.subsidy.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class CSVRenderer(BaseRenderer):
+    """Render a list of dictionaries as CSV."""
+
+    media_type = 'text/csv'
+    format = 'csv'
+    charset = 'utf-8'
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        if data is None:
+            return ''
+
+        output = StringIO(newline='')
+        writer = csv.writer(output)
+        headers = getattr(self, 'csv_headers', {})
+        writer.writerow(headers.values())
+        for row in data:
+            writer.writerow(row.get(field, '') for field in headers)
+        return output.getvalue()
+
+
+class TransactionCsvRenderer(CSVRenderer):
+    """Render learner credit transactions using report-friendly column labels."""
+
+    csv_headers = {
+        'lms_user_email': 'Learner Email',
+        'lms_user_id': 'Learner ID',
+        'content_title': 'Course Title',
+        'content_key': 'Course Key',
+        'created': 'Date Spent (UTC)',
+        'amount_spent': 'Amount Spent',
+        'unit': 'Currency',
+        'state': 'Status',
+        'subsidy_access_policy_uuid': 'Policy UUID',
+    }
+
+
+class TransactionCsvSerializer:
+    """Format transactions for the learner credit spent report."""
+
+    # Customer-facing currency labels; amounts are already converted from cents to dollars in the report.
+    UNIT_DISPLAY_LABELS = {
+        UnitChoices.USD_CENTS: 'USD',
+    }
+
+    def __init__(self, transactions, many=False):
+        self.transactions = transactions
+        self.many = many
+
+    @property
+    def data(self):
+        if self.many:
+            return [self.to_representation(transaction) for transaction in self.transactions]
+        return self.to_representation(self.transactions)
+
+    @staticmethod
+    def get_status(transaction):
+        """
+        A committed reversal means the spend was refunded, so report it as such (as the admin portal's Spent table does)
+        rather than as a plain committed spend.
+        """
+        # getattr() with a default handles the RelatedObjectDoesNotExist raised when there is no reversal.
+        reversal = getattr(transaction, 'reversal', None)
+        if reversal and reversal.state == TransactionStateChoices.COMMITTED:
+            return 'refunded'
+        return transaction.state
+
+    @classmethod
+    def to_representation(cls, transaction):
+        return {
+            'lms_user_email': transaction.lms_user_email,
+            'lms_user_id': transaction.lms_user_id,
+            'content_title': transaction.content_title,
+            'content_key': transaction.content_key,
+            'created': transaction.created.strftime('%Y-%m-%d %H:%M:%S'),
+            'amount_spent': f'{abs(transaction.quantity) / 100:.2f}',
+            'unit': cls.UNIT_DISPLAY_LABELS.get(transaction.ledger.unit, transaction.ledger.unit),
+            'state': cls.get_status(transaction),
+            'subsidy_access_policy_uuid': transaction.subsidy_access_policy_uuid,
+        }
 
 
 class TransactionViewSet(
@@ -65,7 +152,8 @@ class TransactionViewSet(
     lookup_field = "uuid"
     serializer_class = TransactionSerializer
     pagination_class = TransactionListPaginator
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [drf_filters.DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = TransactionAdminFilterSet
 
     # fields that are queried for search
     search_fields = ['lms_user_email', 'content_title']
@@ -91,6 +179,7 @@ class TransactionViewSet(
         """
         permission_for_action = {
             "list": PERMISSION_CAN_READ_TRANSACTIONS,
+            "export": PERMISSION_CAN_READ_TRANSACTIONS,
             "retrieve": PERMISSION_CAN_READ_TRANSACTIONS,
             "create": PERMISSION_CAN_CREATE_TRANSACTIONS,
             "reverse": PERMISSION_CAN_CREATE_TRANSACTIONS,
@@ -106,6 +195,11 @@ class TransactionViewSet(
         store the enterprise_customer_uuid in the Subsidy object, so depending on the type of request, different paths
         to resolve the Subsidy are taken.
         """
+        if self.action == 'export' and not self.requested_subsidy_uuid:
+            # Permission checks run before the view's own query-param validation, so raise here
+            # to surface a 400 instead of masking the missing param with a 403.
+            raise ParseError('subsidy_uuid is required.')
+
         enterprise_customer_uuid = None
         subsidy = None
         try:
@@ -337,6 +431,38 @@ class TransactionViewSet(
         JSON with a paginated list of serialized Transactions.
         """
         return super().list(request, *args, **kwargs)
+
+    @action(detail=False, methods=['get'], renderer_classes=[TransactionCsvRenderer])
+    def export(self, request, *args, **kwargs):
+        """
+        Export a subsidy's learner spend as a CSV report.
+
+        Only committed learner redemptions are included, matching the admin portal's Spent table: deposits (e.g. the
+        subsidy's starting balance) and balance adjustments are ledger transactions too, but are not learner spend.
+        ``subsidy_uuid`` is required; a missing value is rejected with a 400 in ``get_permission_object()``.
+        """
+        queryset = self.filter_queryset(self.get_queryset()).filter(
+            state=TransactionStateChoices.COMMITTED,
+            deposit__isnull=True,
+            adjustment__isnull=True,
+        )
+        serializer = TransactionCsvSerializer(queryset, many=True)
+        response = Response(serializer.data)
+        response['Content-Disposition'] = (
+            f'attachment; filename="spent_report_{self.requested_subsidy_uuid}.csv"'
+        )
+        return response
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        """
+        The export route only has a CSV renderer, which can only render a list of rows.  Render anything else
+        (errors, 405s for unsupported methods, OPTIONS metadata) as JSON instead.
+        """
+        route_renders_csv = any(issubclass(renderer, CSVRenderer) for renderer in self.renderer_classes)
+        if route_renders_csv and isinstance(response, Response) and not isinstance(response.data, list):
+            request.accepted_renderer = JSONRenderer()
+            request.accepted_media_type = JSONRenderer.media_type
+        return super().finalize_response(request, response, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
         """

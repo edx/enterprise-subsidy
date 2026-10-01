@@ -1,9 +1,11 @@
 """
 Tests for views.
 """
+import csv
 import os
 import urllib
 import uuid
+from datetime import datetime, timezone
 from functools import partial
 from operator import itemgetter
 from unittest import mock
@@ -15,15 +17,19 @@ from edx_rbac.utils import ALL_ACCESS_CONTEXT
 from openedx_ledger.models import Transaction, TransactionStateChoices
 from openedx_ledger.test_utils.factories import (
     AdjustmentFactory,
+    DepositFactory,
     ExternalFulfillmentProviderFactory,
     ExternalTransactionReferenceFactory,
+    ReversalFactory,
     TransactionFactory
 )
 from requests.exceptions import HTTPError
 from rest_framework import status
 from rest_framework.reverse import reverse
 
+from enterprise_subsidy.apps.api.paginators import TransactionListPaginator
 from enterprise_subsidy.apps.api.v1.tests.mixins import STATIC_ENTERPRISE_UUID, STATIC_LMS_USER_ID, APITestMixin
+from enterprise_subsidy.apps.api.v1.views.transaction import TransactionCsvRenderer, TransactionCsvSerializer
 from enterprise_subsidy.apps.api_client.enterprise_catalog import EnterpriseCatalogApiClientV2
 from enterprise_subsidy.apps.subsidy.constants import SYSTEM_ENTERPRISE_ADMIN_ROLE, SYSTEM_ENTERPRISE_LEARNER_ROLE
 from enterprise_subsidy.apps.subsidy.models import RevenueCategoryChoices, Subsidy
@@ -1078,6 +1084,251 @@ class TransactionViewSetTests(APITestBase):
             set(response_uuids) - self.all_initial_transactions ==
             set(expected_response_uuids) - self.all_initial_transactions
         )
+
+    def test_export_returns_csv(self):
+        """Export returns all filtered transaction fields in the report format."""
+        self.set_up_operator()
+        url = reverse("api:v1:transaction-export")
+        response = self.client.get(url, {'subsidy_uuid': self.subsidy_1_uuid})
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response['Content-Type'].startswith('text/csv')
+        assert response['Content-Disposition'] == (
+            f'attachment; filename="spent_report_{self.subsidy_1_uuid}.csv"'
+        )
+        rows = list(csv.reader(response.content.decode().splitlines()))
+        assert rows[0] == [
+            'Learner Email', 'Learner ID', 'Course Title', 'Course Key', 'Date Spent (UTC)',
+            'Amount Spent', 'Currency', 'Status', 'Policy UUID',
+        ]
+        transaction_row = next(row for row in rows[1:] if row[3] == self.content_key_1)
+        assert [self.lms_user_email, str(STATIC_LMS_USER_ID), self.content_title_1, self.content_key_1] == (
+            transaction_row[:4]
+        )
+        assert transaction_row[5] == '10.00'
+        assert transaction_row[6] == 'USD'
+
+    def test_export_only_includes_committed_learner_spend(self):
+        """
+        Deposits (including the subsidy's starting balance), balance adjustments, and non-committed transactions are
+        ledger transactions too, but must not show up as learner spend in the report.
+        """
+        # The subsidy's starting balance is recorded as a real initial deposit on creation.
+        assert self.subsidy_1_transaction_initial.deposit is not None
+
+        DepositFactory(ledger=self.subsidy_1.ledger, desired_deposit_quantity=50000)
+        AdjustmentFactory(ledger=self.subsidy_1.ledger, adjustment_quantity=-2000)
+        for state in (TransactionStateChoices.CREATED, TransactionStateChoices.PENDING, TransactionStateChoices.FAILED):
+            TransactionFactory(
+                state=state,
+                quantity=-500,
+                ledger=self.subsidy_1.ledger,
+                lms_user_id=STATIC_LMS_USER_ID,
+                lms_user_email=self.lms_user_email,
+                content_title=f'{state} course',
+            )
+        self.set_up_operator()
+        response = self.client.get(reverse("api:v1:transaction-export"), {'subsidy_uuid': self.subsidy_1_uuid})
+
+        rows = list(csv.DictReader(response.content.decode().splitlines()))
+        exported_titles = {row['Course Title'] for row in rows}
+        assert response.status_code == status.HTTP_200_OK
+        assert exported_titles == {self.content_title_1, self.content_title_2}
+        assert all(row['Learner Email'] for row in rows)
+        assert all(row['Status'] == 'committed' for row in rows)
+
+    def test_export_scoped_to_one_budget(self):
+        """When a subsidy funds several budgets (policies), subsidy_access_policy_uuid limits the export to one."""
+        self.set_up_operator()
+        response = self.client.get(reverse("api:v1:transaction-export"), {
+            'subsidy_uuid': self.subsidy_1_uuid,
+            'subsidy_access_policy_uuid': self.subsidy_access_policy_1_uuid,
+        })
+
+        rows = list(csv.DictReader(response.content.decode().splitlines()))
+        assert response.status_code == status.HTTP_200_OK
+        assert [row['Course Title'] for row in rows] == [self.content_title_1]
+        assert rows[0]['Policy UUID'] == str(self.subsidy_access_policy_1_uuid)
+
+    def test_export_applies_search_and_date_filters(self):
+        """Export applies search and inclusive date range filters without pagination."""
+        Transaction.objects.filter(uuid=self.subsidy_1_transaction_1.uuid).update(
+            created=datetime(2024, 1, 2, tzinfo=timezone.utc),
+        )
+        Transaction.objects.filter(uuid=self.subsidy_1_transaction_2.uuid).update(
+            created=datetime(2024, 1, 10, tzinfo=timezone.utc),
+        )
+        self.set_up_operator()
+        url = reverse("api:v1:transaction-export")
+        response = self.client.get(url, {
+            'subsidy_uuid': self.subsidy_1_uuid,
+            'search': self.content_title_2,
+            'start_date': '2024-01-01',
+            'end_date': '2024-01-10',
+        })
+
+        rows = list(csv.DictReader(response.content.decode().splitlines()))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(rows) == 1
+        assert rows[0]['Course Title'] == self.content_title_2
+
+    def test_export_requires_transaction_read_access(self):
+        """Export rejects unauthenticated and unassigned users."""
+        url = reverse("api:v1:transaction-export")
+        unauthenticated_response = self.client.get(url, {'subsidy_uuid': self.subsidy_1_uuid})
+        assert unauthenticated_response.status_code == status.HTTP_401_UNAUTHORIZED
+
+        self.set_up_user()
+        unauthorized_response = self.client.get(url, {'subsidy_uuid': self.subsidy_1_uuid})
+        assert unauthorized_response.status_code == status.HTTP_403_FORBIDDEN
+
+        # Errors are rendered as JSON, not through the CSV renderer.
+        for error_response in (unauthenticated_response, unauthorized_response):
+            assert error_response['Content-Type'] == 'application/json'
+            assert 'detail' in error_response.json()
+            assert not error_response.has_header('Content-Disposition')
+
+    def test_export_missing_subsidy_uuid_returns_json_error(self):
+        """A missing subsidy_uuid produces a JSON 400 body rather than a stringified dict served as CSV."""
+        self.set_up_operator()
+        response = self.client.get(reverse("api:v1:transaction-export"))
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response['Content-Type'] == 'application/json'
+        assert response.json() == {'detail': 'subsidy_uuid is required.'}
+
+    @ddt.data('post', 'put', 'patch', 'delete', 'options')
+    def test_export_non_get_methods_render_json_not_500(self, method):
+        """
+        Non-GET requests never reach the export action, so their error/metadata payloads must still render as
+        JSON instead of crashing the CSV renderer.
+        """
+        self.set_up_operator()
+        url = f'{reverse("api:v1:transaction-export")}?subsidy_uuid={self.subsidy_1_uuid}'
+        response = getattr(self.client, method)(url)
+
+        # No permission is mapped for these methods, so they are denied before DRF would respond with a 405.
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response['Content-Type'] == 'application/json'
+        assert 'detail' in response.json()
+        assert not response.has_header('Content-Disposition')
+
+    @ddt.data(
+        {'start_date': 'not-a-date'},
+        {'end_date': 'not-a-date'},
+        {'start_date': '2024-02-30'},
+        {'end_date': '2024-13-01T00:00:00'},
+        {'end_date': '01/31/2024'},
+    )
+    def test_export_invalid_date_returns_bad_request(self, date_params):
+        """Invalid or impossible date values are rejected with a JSON 400 rather than a 500."""
+        self.set_up_operator()
+        response = self.client.get(
+            reverse("api:v1:transaction-export"),
+            {'subsidy_uuid': self.subsidy_1_uuid, **date_params},
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response['Content-Type'] == 'application/json'
+        assert 'is not a valid ISO date or datetime' in response.json()['detail']
+
+    def test_list_invalid_date_returns_bad_request(self):
+        """The date filters are shared with the list action, which should also reject invalid values with a 400."""
+        self.set_up_operator()
+        response = self.client.get(
+            reverse("api:v1:transaction-list"),
+            {'subsidy_uuid': self.subsidy_1_uuid, 'start_date': 'not-a-date'},
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_export_formats_zero_amount_transaction(self):
+        """Export formats zero-value transactions without arithmetic errors."""
+        TransactionFactory(
+            state=TransactionStateChoices.COMMITTED,
+            quantity=0,
+            ledger=self.subsidy_1.ledger,
+            lms_user_id=STATIC_LMS_USER_ID,
+            lms_user_email=self.lms_user_email,
+            content_key='course-v1:zero',
+            content_title='Zero Course',
+        )
+        self.set_up_operator()
+        response = self.client.get(reverse("api:v1:transaction-export"), {'subsidy_uuid': self.subsidy_1_uuid})
+
+        rows = list(csv.DictReader(response.content.decode().splitlines()))
+        zero_amount_rows = [row for row in rows if row['Course Title'] == 'Zero Course']
+        assert zero_amount_rows[0]['Amount Spent'] == '0.00'
+
+    def test_export_formatter_handles_empty_and_single_transaction_data(self):
+        """Cover the formatter's empty renderer and single-object serializer paths."""
+        assert TransactionCsvRenderer().render(None) == ''
+
+        serialized_transaction = TransactionCsvSerializer(self.subsidy_1_transaction_1).data
+        assert serialized_transaction['amount_spent'] == '10.00'
+
+    def test_export_single_day_date_range_is_inclusive(self):
+        """A range whose start and end are the same day includes that whole day."""
+        Transaction.objects.filter(uuid=self.subsidy_1_transaction_1.uuid).update(
+            created=datetime(2024, 1, 2, tzinfo=timezone.utc),
+        )
+        Transaction.objects.filter(uuid=self.subsidy_1_transaction_2.uuid).update(
+            created=datetime(2024, 1, 10, tzinfo=timezone.utc),
+        )
+        self.set_up_operator()
+        response = self.client.get(reverse("api:v1:transaction-export"), {
+            'subsidy_uuid': self.subsidy_1_uuid,
+            'start_date': '2024-01-10',
+            'end_date': '2024-01-10',
+        })
+
+        rows = list(csv.DictReader(response.content.decode().splitlines()))
+        assert response.status_code == status.HTTP_200_OK
+        assert [row['Course Title'] for row in rows] == [self.content_title_2]
+
+    def test_export_is_unpaginated_and_marks_refunded_transactions(self):
+        """Export returns every learner spend without pagination, and reports reversed spends as refunded."""
+        reversed_transaction = TransactionFactory(
+            state=TransactionStateChoices.COMMITTED,
+            quantity=-250,
+            ledger=self.subsidy_1.ledger,
+            lms_user_id=STATIC_LMS_USER_ID,
+            lms_user_email=self.lms_user_email,
+            content_key='course-v1:reversed',
+            content_title='Reversed Course',
+        )
+        ReversalFactory(
+            transaction=reversed_transaction,
+            state=TransactionStateChoices.COMMITTED,
+            quantity=250,
+        )
+        for transaction_number in range(25):
+            TransactionFactory(
+                state=TransactionStateChoices.COMMITTED,
+                quantity=-100,
+                ledger=self.subsidy_1.ledger,
+                lms_user_id=STATIC_LMS_USER_ID,
+                lms_user_email=self.lms_user_email,
+                content_key=f'course-v1:extra-{transaction_number}',
+                content_title=f'Extra Course {transaction_number}',
+            )
+        self.set_up_operator()
+        response = self.client.get(reverse("api:v1:transaction-export"), {'subsidy_uuid': self.subsidy_1_uuid})
+
+        rows = list(csv.DictReader(response.content.decode().splitlines()))
+        expected_count = Transaction.objects.filter(
+            ledger=self.subsidy_1.ledger,
+            state=TransactionStateChoices.COMMITTED,
+            deposit__isnull=True,
+            adjustment__isnull=True,
+        ).count()
+        reversed_rows = [row for row in rows if row['Course Title'] == 'Reversed Course']
+        assert response.status_code == status.HTTP_200_OK
+        assert expected_count > TransactionListPaginator.page_size
+        assert len(rows) == expected_count
+        assert reversed_rows[0]['Amount Spent'] == '2.50'
+        assert reversed_rows[0]['Status'] == 'refunded'
+        assert {row['Status'] for row in rows if row['Course Title'] != 'Reversed Course'} == {'committed'}
 
     def test_list_no_include_aggregates(self):
         """
