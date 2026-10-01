@@ -158,7 +158,7 @@ django-simple-history==3.4.0
     #   -c requirements/constraints.txt
     #   -r requirements/base.txt
     #   openedx-ledger
-django-test-migrations==1.6.0
+django-test-migrations==1.7.0
     # via -r requirements/test.in
 django-waffle==5.0.0
     # via
@@ -228,7 +228,7 @@ edx-rbac==3.0.0
     # via
     #   -r requirements/base.txt
     #   openedx-ledger
-edx-rest-api-client==7.0.0
+edx-rest-api-client==7.1.0
     # via -r requirements/base.txt
 edx-toggles==6.0.0
     # via
@@ -244,7 +244,7 @@ fastavro==1.12.2
     #   -r requirements/base.txt
     #   confluent-kafka
     #   openedx-events
-filelock==3.32.7
+filelock==4.0.3
     # via
     #   python-discovery
     #   tox
@@ -334,7 +334,7 @@ packaging==26.3
     #   pyproject-api
     #   pytest
     #   tox
-platformdirs==4.11.10
+platformdirs==4.11.12
     # via
     #   pylint
     #   tox
@@ -358,7 +358,7 @@ pycparser==3.0
     #   cffi
 pygments==2.21.0
     # via pytest
-pyjwt[crypto]==2.14.0
+pyjwt[crypto]==2.15.0
     # via
     #   -r requirements/base.txt
     #   drf-jwt
@@ -366,7 +366,7 @@ pyjwt[crypto]==2.14.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==4.0.8
+pylint==4.0.9
     # via
     #   edx-lint
     #   pylint-celery
@@ -382,7 +382,7 @@ pylint-plugin-utils==0.9.0
     #   pylint-django
 pymemcache==4.0.0
     # via -r requirements/base.txt
-pymongo==4.18.1
+pymongo==4.18.2
     # via
     #   -r requirements/base.txt
     #   edx-opaque-keys
@@ -406,7 +406,7 @@ python-discovery==1.6.1
     # via
     #   tox
     #   virtualenv
-python-slugify==9.0.0
+python-slugify==9.1.1
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -414,7 +414,7 @@ python3-openid==3.2.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-pytz==2026.3.post1
+pytz==2026.4
     # via
     #   -r requirements/base.txt
     #   drf-yasg
@@ -508,13 +508,12 @@ tomlkit==0.15.1
     # via
     #   edx-lint
     #   pylint
-tox==4.61.5
+tox==4.64.2
     # via -r requirements/test.in
 typing-extensions==4.16.0
     # via
     #   -r requirements/base.txt
     #   anyio
-    #   django-test-migrations
     #   edx-opaque-keys
     #   referencing
     #   tox
@@ -528,7 +527,7 @@ urllib3==2.8.0
     #   -r requirements/base.txt
     #   requests
     #   responses
-virtualenv==21.7.12
+virtualenv==21.12.1
     # via tox
 
 # The following packages are considered to be unsafe in a requirements file:
