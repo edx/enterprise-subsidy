@@ -14,7 +14,7 @@ asgiref==3.12.1
     #   django
     #   django-cors-headers
     #   social-auth-app-django
-astroid==4.0.4
+astroid==4.3.3
     # via
     #   pylint
     #   pylint-celery
@@ -52,7 +52,7 @@ cffi==2.1.1
     #   -r requirements/base.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.5.1
+charset-normalizer==3.5.2
     # via
     #   -r requirements/base.txt
     #   requests
@@ -75,11 +75,11 @@ colorama==0.4.6
     # via tox
 confluent-kafka[avro,schema-registry]==2.15.1
     # via -r requirements/base.txt
-coverage[toml]==7.16.1
+coverage[toml]==7.16.2
     # via
     #   -r requirements/test.in
     #   pytest-cov
-cryptography==50.0.1
+cryptography==50.0.2
     # via
     #   -r requirements/base.txt
     #   authlib
@@ -189,7 +189,7 @@ drf-spectacular==0.30.0
     # via -r requirements/base.txt
 drf-yasg==1.21.15
     # via -r requirements/base.txt
-edx-auth-backends==5.0.0
+edx-auth-backends==5.1.0
     # via -r requirements/base.txt
 edx-ccx-keys==2.0.2
     # via
@@ -199,7 +199,7 @@ edx-django-release-util==1.5.0
     # via
     #   -r requirements/base.txt
     #   openedx-ledger
-edx-django-utils==8.0.2
+edx-django-utils==8.1.0
     # via
     #   -r requirements/base.txt
     #   edx-auth-backends
@@ -214,11 +214,11 @@ edx-drf-extensions==10.9.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
-edx-event-bus-kafka==6.1.0
+edx-event-bus-kafka==6.2.0
     # via -r requirements/base.txt
 edx-lint==6.2.0
     # via -r requirements/test.in
-edx-opaque-keys[django]==4.0.0
+edx-opaque-keys[django]==4.0.1
     # via
     #   -r requirements/base.txt
     #   edx-ccx-keys
@@ -237,14 +237,14 @@ edx-toggles==6.0.0
     #   edx-event-bus-kafka
 factory-boy==3.3.3
     # via -r requirements/test.in
-faker==40.39.0
+faker==40.40.0
     # via factory-boy
 fastavro==1.12.2
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
     #   openedx-events
-filelock==4.0.3
+filelock==4.0.9
     # via
     #   python-discovery
     #   tox
@@ -276,7 +276,7 @@ inflection==0.5.1
     #   drf-yasg
 iniconfig==2.3.0
     # via pytest
-isort==9.0.1
+isort==9.0.2
     # via pylint
 jinja2==3.1.6
     # via
@@ -312,20 +312,20 @@ mysqlclient==2.3.0
     # via
     #   -r requirements/base.txt
     #   openedx-ledger
-oauthlib==3.3.1
+oauthlib==4.0.0
     # via
     #   -r requirements/base.txt
     #   getsmarter-api-clients
     #   requests-oauthlib
     #   social-auth-core
-openedx-atlas==0.7.1
+openedx-atlas==0.7.2
     # via -r requirements/base.txt
 openedx-events==11.2.0
     # via
     #   -r requirements/base.txt
     #   edx-event-bus-kafka
     #   openedx-ledger
-openedx-ledger==2.0.0
+openedx-ledger==2.1.0
     # via -r requirements/base.txt
 packaging==26.3
     # via
@@ -334,7 +334,8 @@ packaging==26.3
     #   pyproject-api
     #   pytest
     #   tox
-platformdirs==4.11.12
+    #   virtualenv
+platformdirs==4.12.2
     # via
     #   pylint
     #   tox
@@ -358,7 +359,7 @@ pycparser==3.0
     #   cffi
 pygments==2.21.0
     # via pytest
-pyjwt[crypto]==2.15.0
+pyjwt[crypto]==2.15.1
     # via
     #   -r requirements/base.txt
     #   drf-jwt
@@ -366,7 +367,7 @@ pyjwt[crypto]==2.15.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==4.0.9
+pylint==4.1.1
     # via
     #   edx-lint
     #   pylint-celery
@@ -406,7 +407,7 @@ python-discovery==1.6.1
     # via
     #   tox
     #   virtualenv
-python-slugify==9.1.1
+python-slugify==9.1.2
     # via
     #   -r requirements/base.txt
     #   code-annotations
@@ -508,7 +509,7 @@ tomlkit==0.15.1
     # via
     #   edx-lint
     #   pylint
-tox==4.64.2
+tox==4.64.7
     # via -r requirements/test.in
 typing-extensions==4.16.0
     # via
@@ -527,7 +528,7 @@ urllib3==2.8.0
     #   -r requirements/base.txt
     #   requests
     #   responses
-virtualenv==21.12.1
+virtualenv==21.14.3
     # via tox
 
 # The following packages are considered to be unsafe in a requirements file:

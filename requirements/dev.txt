@@ -14,7 +14,7 @@ asgiref==3.12.1
     #   django
     #   django-cors-headers
     #   social-auth-app-django
-astroid==4.0.4
+astroid==4.3.3
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -59,7 +59,7 @@ cffi==2.1.1
     #   pynacl
 chardet==7.6.0
     # via diff-cover
-charset-normalizer==3.5.1
+charset-normalizer==3.5.2
     # via
     #   -r requirements/validation.txt
     #   requests
@@ -87,11 +87,11 @@ colorama==0.4.6
     #   tox
 confluent-kafka[avro,schema-registry]==2.15.1
     # via -r requirements/validation.txt
-coverage[toml]==7.16.1
+coverage[toml]==7.16.2
     # via
     #   -r requirements/validation.txt
     #   pytest-cov
-cryptography==50.0.1
+cryptography==50.0.2
     # via
     #   -r requirements/validation.txt
     #   authlib
@@ -219,7 +219,7 @@ drf-spectacular==0.30.0
     # via -r requirements/validation.txt
 drf-yasg==1.21.15
     # via -r requirements/validation.txt
-edx-auth-backends==5.0.0
+edx-auth-backends==5.1.0
     # via -r requirements/validation.txt
 edx-ccx-keys==2.0.2
     # via
@@ -229,7 +229,7 @@ edx-django-release-util==1.5.0
     # via
     #   -r requirements/validation.txt
     #   openedx-ledger
-edx-django-utils==8.0.2
+edx-django-utils==8.1.0
     # via
     #   -r requirements/validation.txt
     #   edx-auth-backends
@@ -244,13 +244,13 @@ edx-drf-extensions==10.9.0
     # via
     #   -r requirements/validation.txt
     #   edx-rbac
-edx-event-bus-kafka==6.1.0
+edx-event-bus-kafka==6.2.0
     # via -r requirements/validation.txt
-edx-i18n-tools==2.0.0
+edx-i18n-tools==2.1.0
     # via -r requirements/dev.in
 edx-lint==6.2.0
     # via -r requirements/validation.txt
-edx-opaque-keys[django]==4.0.0
+edx-opaque-keys[django]==4.0.1
     # via
     #   -r requirements/validation.txt
     #   edx-ccx-keys
@@ -269,7 +269,7 @@ edx-toggles==6.0.0
     #   edx-event-bus-kafka
 factory-boy==3.3.3
     # via -r requirements/validation.txt
-faker==40.39.0
+faker==40.40.0
     # via
     #   -r requirements/validation.txt
     #   factory-boy
@@ -278,7 +278,7 @@ fastavro==1.12.2
     #   -r requirements/validation.txt
     #   confluent-kafka
     #   openedx-events
-filelock==4.0.3
+filelock==4.0.9
     # via
     #   -r requirements/validation.txt
     #   python-discovery
@@ -317,7 +317,7 @@ iniconfig==2.3.0
     # via
     #   -r requirements/validation.txt
     #   pytest
-isort==9.0.1
+isort==9.0.2
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -404,20 +404,20 @@ nh3==0.3.7
     # via
     #   -r requirements/validation.txt
     #   readme-renderer
-oauthlib==3.3.1
+oauthlib==4.0.0
     # via
     #   -r requirements/validation.txt
     #   getsmarter-api-clients
     #   requests-oauthlib
     #   social-auth-core
-openedx-atlas==0.7.1
+openedx-atlas==0.7.2
     # via -r requirements/validation.txt
 openedx-events==11.2.0
     # via
     #   -r requirements/validation.txt
     #   edx-event-bus-kafka
     #   openedx-ledger
-openedx-ledger==2.0.0
+openedx-ledger==2.1.0
     # via -r requirements/validation.txt
 packaging==26.3
     # via
@@ -429,12 +429,13 @@ packaging==26.3
     #   pytest
     #   tox
     #   twine
+    #   virtualenv
     #   wheel
-path==16.16.0
+path==17.1.1
     # via edx-i18n-tools
 pip-tools==7.6.1
     # via -r requirements/pip-tools.txt
-platformdirs==4.11.12
+platformdirs==4.12.2
     # via
     #   -r requirements/validation.txt
     #   pylint
@@ -472,7 +473,7 @@ pygments==2.21.0
     #   pytest
     #   readme-renderer
     #   rich
-pyjwt[crypto]==2.15.0
+pyjwt[crypto]==2.15.1
     # via
     #   -r requirements/validation.txt
     #   drf-jwt
@@ -480,7 +481,7 @@ pyjwt[crypto]==2.15.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==4.0.9
+pylint==4.1.1
     # via
     #   -r requirements/validation.txt
     #   edx-lint
@@ -535,7 +536,7 @@ python-discovery==1.6.1
     #   -r requirements/validation.txt
     #   tox
     #   virtualenv
-python-slugify==9.1.1
+python-slugify==9.1.2
     # via
     #   -r requirements/validation.txt
     #   code-annotations
@@ -664,7 +665,7 @@ tomlkit==0.15.1
     #   -r requirements/validation.txt
     #   edx-lint
     #   pylint
-tox==4.64.2
+tox==4.64.7
     # via -r requirements/validation.txt
 twine==7.0.0
     # via -r requirements/validation.txt
@@ -687,7 +688,7 @@ urllib3==2.8.0
     #   requests
     #   responses
     #   twine
-virtualenv==21.12.1
+virtualenv==21.14.3
     # via
     #   -r requirements/validation.txt
     #   tox

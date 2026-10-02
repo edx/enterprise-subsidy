@@ -35,7 +35,7 @@ cffi==2.1.1
     # via
     #   cryptography
     #   pynacl
-charset-normalizer==3.5.1
+charset-normalizer==3.5.2
     # via requests
 click==8.5.0
     # via
@@ -45,7 +45,7 @@ code-annotations==3.0.0
     # via edx-toggles
 confluent-kafka[avro,schema-registry]==2.15.1
     # via -r requirements/base.in
-cryptography==50.0.1
+cryptography==50.0.2
     # via
     #   authlib
     #   joserfc
@@ -137,7 +137,7 @@ drf-spectacular==0.30.0
     # via -r requirements/base.in
 drf-yasg==1.21.15
     # via -r requirements/base.in
-edx-auth-backends==5.0.0
+edx-auth-backends==5.1.0
     # via -r requirements/base.in
 edx-ccx-keys==2.0.2
     # via openedx-events
@@ -145,7 +145,7 @@ edx-django-release-util==1.5.0
     # via
     #   -r requirements/base.in
     #   openedx-ledger
-edx-django-utils==8.0.2
+edx-django-utils==8.1.0
     # via
     #   -r requirements/base.in
     #   edx-auth-backends
@@ -160,9 +160,9 @@ edx-drf-extensions==10.9.0
     # via
     #   -r requirements/base.in
     #   edx-rbac
-edx-event-bus-kafka==6.1.0
+edx-event-bus-kafka==6.2.0
     # via -r requirements/base.in
-edx-opaque-keys[django]==4.0.0
+edx-opaque-keys[django]==4.0.1
     # via
     #   edx-ccx-keys
     #   edx-drf-extensions
@@ -216,19 +216,19 @@ mysqlclient==2.3.0
     # via
     #   -r requirements/base.in
     #   openedx-ledger
-oauthlib==3.3.1
+oauthlib==4.0.0
     # via
     #   getsmarter-api-clients
     #   requests-oauthlib
     #   social-auth-core
-openedx-atlas==0.7.1
+openedx-atlas==0.7.2
     # via -r requirements/base.in
 openedx-events==11.2.0
     # via
     #   -r requirements/base.in
     #   edx-event-bus-kafka
     #   openedx-ledger
-openedx-ledger==2.0.0
+openedx-ledger==2.1.0
     # via -r requirements/base.in
 packaging==26.3
     # via drf-yasg
@@ -238,7 +238,7 @@ psutil==7.2.2
     # via edx-django-utils
 pycparser==3.0
     # via cffi
-pyjwt[crypto]==2.15.0
+pyjwt[crypto]==2.15.1
     # via
     #   drf-jwt
     #   edx-auth-backends
@@ -253,7 +253,7 @@ pynacl==1.6.2
     # via edx-django-utils
 python-dateutil==2.9.0.post0
     # via -r requirements/base.in
-python-slugify==9.1.1
+python-slugify==9.1.2
     # via code-annotations
 python3-openid==3.2.0
     # via social-auth-core
