@@ -345,6 +345,16 @@ class TransactionAdminExport(TransactionBaseViewMixin, generics.GenericAPIView):
         Streams the learner spend report for the given ``subsidy_uuid`` as a CSV file attachment.
         """
         self.check_requested_enterprise_customer()
+        # This endpoint is reachable both directly with an admin's JWT and via enterprise-access acting with
+        # service credentials, so record the bulk read of learner emails here rather than relying on the caller.
+        logger.info(
+            'Learner credit spend export started: user_id=%s, subsidy_uuid=%s, '
+            'enterprise_customer_uuid=%s, subsidy_access_policy_uuid=%s',
+            request.user.id,
+            subsidy_uuid,
+            self.subsidy.enterprise_customer_uuid,
+            request.query_params.get('subsidy_access_policy_uuid'),
+        )
         transactions = self.filter_queryset(self.get_queryset())
         response = StreamingHttpResponse(
             iter_spend_report_csv(transactions.iterator()),

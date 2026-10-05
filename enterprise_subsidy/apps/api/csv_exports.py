@@ -6,8 +6,7 @@ from decimal import Decimal
 
 from openedx_ledger.models import TransactionStateChoices, UnitChoices
 
-# Columns holding text from learners or catalog metadata, which a spreadsheet could otherwise run as a formula.
-UNTRUSTED_TEXT_COLUMNS = {'Learner Email', 'Course Title', 'Course Key'}
+from enterprise_subsidy.apps.subsidy.constants import CENTS_PER_DOLLAR
 
 # https://owasp.org/www-community/attacks/CSV_Injection
 FORMULA_TRIGGER_CHARACTERS = ('=', '+', '-', '@', '\t', '\r')
@@ -31,15 +30,14 @@ def format_amount_spent(transaction):
 
     Spend is recorded as a negative quantity, so it is negated rather than ``abs()``-ed: an unexpected positive
     quantity then shows up as a negative amount instead of being hidden.
+
+    ``UnitChoices`` defines only ``usd_cents`` and ``seats``, and ``Ledger.unit`` defaults to ``usd_cents``, so
+    there is no third case to handle here.
     """
     spent = -transaction.quantity
-    unit = transaction.ledger.unit
-    if unit == UnitChoices.USD_CENTS:
-        return f'{Decimal(spent) / 100:.2f}', 'USD'
-    if unit == UnitChoices.SEATS:
+    if transaction.ledger.unit == UnitChoices.SEATS:
         return str(spent), 'Seats'
-    # Not a unit openedx-ledger defines today; report the raw quantity rather than guess at a conversion.
-    return str(spent), unit
+    return f'{Decimal(spent) / CENTS_PER_DOLLAR:.2f}', 'USD'
 
 
 def get_spend_status(transaction):
@@ -53,18 +51,35 @@ def get_spend_status(transaction):
     return transaction.state.capitalize()
 
 
-# Column header -> function returning that column's (unescaped) value for a transaction.
-SPEND_REPORT_COLUMNS = {
-    'Learner Email': lambda transaction: transaction.lms_user_email,
-    'Learner ID': lambda transaction: transaction.lms_user_id,
-    'Course Title': lambda transaction: transaction.content_title,
-    'Course Key': lambda transaction: transaction.content_key,
-    'Date Spent (UTC)': lambda transaction: transaction.created.strftime('%Y-%m-%d %H:%M:%S'),
-    'Amount Spent': lambda transaction: format_amount_spent(transaction)[0],
-    'Unit': lambda transaction: format_amount_spent(transaction)[1],
-    'Status': get_spend_status,
-    'Policy UUID': lambda transaction: transaction.subsidy_access_policy_uuid,
-}
+SPEND_REPORT_HEADERS = (
+    'Learner Email',
+    'Learner ID',
+    'Course Title',
+    'Course Key',
+    'Date Spent (UTC)',
+    'Amount Spent',
+    'Unit',
+    'Status',
+    'Policy UUID',
+)
+
+
+def spend_report_row(transaction):
+    """
+    Returns one transaction's cells, in ``SPEND_REPORT_HEADERS`` order, with untrusted text escaped.
+    """
+    amount, unit = format_amount_spent(transaction)
+    return (
+        escape_formula(transaction.lms_user_email),
+        transaction.lms_user_id,
+        escape_formula(transaction.content_title),
+        escape_formula(transaction.content_key),
+        transaction.created.strftime('%Y-%m-%d %H:%M:%S'),
+        amount,
+        unit,
+        get_spend_status(transaction),
+        transaction.subsidy_access_policy_uuid,
+    )
 
 
 class _Echo:
@@ -77,12 +92,10 @@ class _Echo:
 
 def iter_spend_report_csv(transactions):
     """
-    Yields the spend report as CSV text, one row at a time, so it can be streamed without holding it in memory.
+    Yields the spend report as CSV text, one row at a time, so the response can start before the whole report
+    has been rendered.
     """
     writer = csv.writer(_Echo())
-    yield UTF8_BOM + writer.writerow(SPEND_REPORT_COLUMNS.keys())
+    yield UTF8_BOM + writer.writerow(SPEND_REPORT_HEADERS)
     for transaction in transactions:
-        yield writer.writerow(
-            escape_formula(get_value(transaction)) if column in UNTRUSTED_TEXT_COLUMNS else get_value(transaction)
-            for column, get_value in SPEND_REPORT_COLUMNS.items()
-        )
+        yield writer.writerow(spend_report_row(transaction))
