@@ -1544,7 +1544,7 @@ class TransactionViewSetTests(APITestBase):
         }
         del post_data[missing_post_arg]
         response = self.client.post(url, post_data)
-        assert response.status_code >= 400 and response.status_code < 500
+        assert 400 <= response.status_code < 500
         # Just make sure there's any parseable json which is likely to contain an explanation of the error.
         assert response.json()
 
