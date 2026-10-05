@@ -2,20 +2,24 @@
 Views for the enterprise-subsidy service relating to the Transaction model
 """
 import logging
+from uuid import UUID
 
+from django.http import StreamingHttpResponse
 from django.utils.functional import cached_property
 from django_filters import rest_framework as drf_filters
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
-from openedx_ledger.models import LedgerLockAttemptFailed, Transaction
+from openedx_ledger.models import LedgerLockAttemptFailed, Transaction, TransactionStateChoices
 from requests.exceptions import HTTPError
 from rest_framework import filters, generics, permissions, status
 from rest_framework.authentication import SessionAuthentication
-from rest_framework.exceptions import APIException, NotFound, PermissionDenied, Throttled
+from rest_framework.exceptions import APIException, NotFound, ParseError, PermissionDenied, Throttled
 
+from enterprise_subsidy.apps.api.csv_exports import iter_spend_report_csv
 from enterprise_subsidy.apps.api.exceptions import ErrorCodes, TransactionCreationAPIException
-from enterprise_subsidy.apps.api.filters import TransactionAdminFilterSet
+from enterprise_subsidy.apps.api.filters import TransactionAdminFilterSet, TransactionExportFilterSet
 from enterprise_subsidy.apps.api.paginators import TransactionListPaginator
 from enterprise_subsidy.apps.api.utils import get_subsidy_customer_uuid_from_view
 from enterprise_subsidy.apps.api.v1.serializers import (
@@ -259,3 +263,92 @@ class TransactionUserList(TransactionBaseViewMixin, generics.ListAPIView):
             return super().list(request, subsidy_uuid)
         except Subsidy.DoesNotExist:
             raise NotFound(detail='The requested Subsidy record does not exist.')
+
+
+class TransactionAdminExport(TransactionBaseViewMixin, generics.GenericAPIView):
+    """
+    Streams a subsidy's learner spend as a CSV report, for admins of the subsidy's enterprise customer (and operators).
+
+    Only committed learner redemptions are included, matching the admin portal's Spent table: deposits (e.g. the
+    subsidy's starting balance) and balance adjustments are ledger transactions too, but are not learner spend.
+    """
+    filter_backends = [drf_filters.DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = TransactionExportFilterSet
+    search_fields = ['lms_user_email', 'content_title']
+
+    def get_queryset(self):
+        """
+        Committed learner spend for the requested subsidy, newest first, joining only the relations the report reads.
+        """
+        return Transaction.objects.select_related(
+            'ledger',
+            'reversal',
+        ).filter(
+            ledger__subsidy=self.subsidy,
+            state=TransactionStateChoices.COMMITTED,
+            deposit__isnull=True,
+            adjustment__isnull=True,
+        ).order_by('-created', 'uuid')
+
+    def check_requested_enterprise_customer(self):
+        """
+        Callers acting with all-access credentials (e.g. enterprise-access, on behalf of an enterprise admin) may pass
+        the enterprise they're acting for. If it doesn't own the subsidy, respond as if the subsidy didn't exist.
+        """
+        requested_customer_uuid = self.request.query_params.get('enterprise_customer_uuid')
+        if not requested_customer_uuid:
+            return
+        try:
+            requested_customer_uuid = UUID(requested_customer_uuid)
+        except ValueError as exc:
+            raise ParseError(f'{requested_customer_uuid} is not a valid uuid.') from exc
+        if requested_customer_uuid != self.subsidy.enterprise_customer_uuid:
+            raise NotFound(detail='The requested Subsidy record does not exist.')
+
+    @extend_schema(
+        tags=['transactions'],
+        parameters=[
+            OpenApiParameter(
+                'enterprise_customer_uuid', OpenApiTypes.UUID,
+                description='If given, the subsidy must belong to this enterprise customer (otherwise 404).',
+            ),
+            OpenApiParameter(
+                'subsidy_access_policy_uuid', OpenApiTypes.UUID,
+                description='Only include spend redeemed via this policy (budget).',
+            ),
+            OpenApiParameter(
+                'start_date', OpenApiTypes.DATE,
+                description='Only include spend on/after this date (UTC).',
+            ),
+            OpenApiParameter(
+                'end_date', OpenApiTypes.DATE,
+                description='Only include spend on/before this date, inclusive (UTC).',
+            ),
+            OpenApiParameter(
+                'search', OpenApiTypes.STR,
+                description='Only include spend whose learner email or course title contains this text.',
+            ),
+        ],
+        responses={
+            (status.HTTP_200_OK, 'text/csv'): OpenApiResponse(
+                response=OpenApiTypes.BINARY,
+                description='The spend report, as a UTF-8 CSV file attachment.',
+            ),
+            status.HTTP_400_BAD_REQUEST: OpenApiResponse(description='Invalid query parameters.'),
+            status.HTTP_403_FORBIDDEN: PermissionDenied,
+            status.HTTP_404_NOT_FOUND: NotFound,
+        },
+    )
+    @permission_required(PERMISSION_CAN_READ_ALL_TRANSACTIONS, fn=get_subsidy_customer_uuid_from_view)
+    def get(self, request, subsidy_uuid):
+        """
+        Streams the learner spend report for the given ``subsidy_uuid`` as a CSV file attachment.
+        """
+        self.check_requested_enterprise_customer()
+        transactions = self.filter_queryset(self.get_queryset())
+        response = StreamingHttpResponse(
+            iter_spend_report_csv(transactions.iterator()),
+            content_type='text/csv; charset=utf-8',
+        )
+        response['Content-Disposition'] = f'attachment; filename="spent_report_{subsidy_uuid}.csv"'
+        return response

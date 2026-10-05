@@ -2,14 +2,10 @@
 Defines django-filter/DRF FilterSets
 for our API views.
 """
-from datetime import datetime
-
-from django.utils import timezone
-from django.utils.dateparse import parse_date, parse_datetime
+from django import forms
 from django_filters import filters
 from django_filters import rest_framework as drf_filters
 from openedx_ledger.models import Transaction, TransactionStateChoices
-from rest_framework.exceptions import ValidationError
 
 
 class HelpfulFilterSet(drf_filters.FilterSet):
@@ -42,44 +38,6 @@ class TransactionAdminFilterSet(HelpfulFilterSet):
         field_name='state',
         choices=TransactionStateChoices.CHOICES,
     )
-    start_date = filters.CharFilter(
-        method='filter_start_date',
-        help_text='Only include transactions created on/after this ISO date or datetime (a date means 00:00:00).',
-    )
-    end_date = filters.CharFilter(
-        method='filter_end_date',
-        help_text='Only include transactions created on/before this ISO date or datetime (a date means 23:59:59).',
-    )
-
-    @staticmethod
-    def _parse_date(value, end_of_day=False):
-        """
-        Parse an ISO date or datetime into an aware datetime; bare dates snap to the start or end of that day.
-        """
-        # Raise DRF's ValidationError (not Django's) so an invalid value surfaces as a 400, not a 500.
-        invalid_value_error = ValidationError({'detail': f'{value} is not a valid ISO date or datetime.'})
-        try:
-            # parse_date/parse_datetime raise ValueError for well-formed but impossible values like 2024-02-30.
-            parsed_datetime = parse_datetime(value)
-            parsed_date = parse_date(value) if parsed_datetime is None else None
-        except ValueError as exc:
-            raise invalid_value_error from exc
-        if parsed_datetime is None:
-            if parsed_date is None:
-                raise invalid_value_error
-            parsed_datetime = datetime.combine(
-                parsed_date,
-                datetime.max.time() if end_of_day else datetime.min.time(),
-            )
-        if timezone.is_naive(parsed_datetime):
-            parsed_datetime = timezone.make_aware(parsed_datetime)
-        return parsed_datetime
-
-    def filter_start_date(self, queryset, name, value):  # pylint: disable=unused-argument
-        return queryset.filter(created__gte=self._parse_date(value))
-
-    def filter_end_date(self, queryset, name, value):  # pylint: disable=unused-argument
-        return queryset.filter(created__lte=self._parse_date(value, end_of_day=True))
 
     class Meta:
         model = Transaction
@@ -88,4 +46,43 @@ class TransactionAdminFilterSet(HelpfulFilterSet):
             'content_key',
             'subsidy_access_policy_uuid',
             'state',
+        ]
+
+
+class TransactionExportFilterForm(forms.Form):
+    """
+    Cross-field validation for ``TransactionExportFilterSet``.
+    """
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date, end_date = cleaned_data.get('start_date'), cleaned_data.get('end_date')
+        if start_date and end_date and start_date > end_date:
+            self.add_error('end_date', 'end_date must be on or after start_date.')
+        return cleaned_data
+
+
+class TransactionExportFilterSet(HelpfulFilterSet):
+    """
+    Filters for the admin transactions CSV export.
+
+    Kept separate from ``TransactionAdminFilterSet`` so the export's date filters don't change the admin list.
+    """
+    start_date = filters.DateFilter(
+        field_name='created',
+        lookup_expr='date__gte',
+        input_formats=['%Y-%m-%d'],
+        help_text='Only include transactions created on/after this date (YYYY-MM-DD, UTC).',
+    )
+    end_date = filters.DateFilter(
+        field_name='created',
+        lookup_expr='date__lte',
+        input_formats=['%Y-%m-%d'],
+        help_text='Only include transactions created on/before this date, inclusive (YYYY-MM-DD, UTC).',
+    )
+
+    class Meta:
+        model = Transaction
+        form = TransactionExportFilterForm
+        fields = [
+            'subsidy_access_policy_uuid',
         ]
