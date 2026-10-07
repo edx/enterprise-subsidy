@@ -9,7 +9,7 @@ from openedx_ledger.models import TransactionStateChoices, UnitChoices
 from enterprise_subsidy.apps.subsidy.constants import CENTS_PER_DOLLAR
 
 # https://owasp.org/www-community/attacks/CSV_Injection
-FORMULA_TRIGGER_CHARACTERS = ('=', '+', '-', '@', '\t', '\r')
+FORMULA_TRIGGER_CHARACTERS = ('=', '+', '-', '@', '\t', '\r', '\n')
 
 # Excel only detects UTF-8 (rather than the system code page) when the file starts with a byte order mark.
 UTF8_BOM = '\ufeff'

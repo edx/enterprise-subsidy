@@ -23,6 +23,7 @@ class EscapeFormulaTests(TestCase):
         ('@A1', "'@A1"),
         ('\tx', "'\tx"),
         ('\rx', "'\rx"),
+        ('\nx', "'\nx"),
         ('safe=text', 'safe=text'),
         ('', ''),
         (None, None),
