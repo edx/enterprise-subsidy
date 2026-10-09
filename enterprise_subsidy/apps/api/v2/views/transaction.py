@@ -274,6 +274,7 @@ class CSVPassthroughRenderer(BaseRenderer):
     format = 'csv'
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
+        renderer_context['response']['Content-Type'] = JSONRenderer.media_type
         return JSONRenderer().render(data)
 
 

@@ -3,7 +3,6 @@ Tests for the v2 transaction views.
 """
 import csv
 import io
-import json
 import urllib
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -1155,9 +1154,10 @@ class TransactionAdminExportViewTests(APITestMixin):
         if owns_subsidy:
             assert response.status_code == status.HTTP_200_OK
         else:
-            # Errors are still JSON for a client that asked for text/csv.
+            # Errors are still JSON, and labelled as such, for a client that asked for text/csv.
             assert response.status_code == status.HTTP_404_NOT_FOUND
-            assert 'detail' in json.loads(response.content)
+            assert response['Content-Type'] == 'application/json'
+            assert 'detail' in response.json()
 
     @ddt.data('=1+1', '+1', '-1', '@A1', '\tx', '\rx', '\nx')
     def test_formula_cells_are_escaped(self, value):
