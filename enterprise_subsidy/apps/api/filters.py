@@ -2,6 +2,7 @@
 Defines django-filter/DRF FilterSets
 for our API views.
 """
+from django import forms
 from django_filters import filters
 from django_filters import rest_framework as drf_filters
 from openedx_ledger.models import Transaction, TransactionStateChoices
@@ -45,4 +46,41 @@ class TransactionAdminFilterSet(HelpfulFilterSet):
             'content_key',
             'subsidy_access_policy_uuid',
             'state',
+        ]
+
+
+class TransactionExportFilterForm(forms.Form):
+    """
+    Cross-field validation for ``TransactionExportFilterSet``.
+    """
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date, end_date = cleaned_data.get('start_date'), cleaned_data.get('end_date')
+        if start_date and end_date and start_date > end_date:
+            self.add_error('end_date', 'end_date must be on or after start_date.')
+        return cleaned_data
+
+
+class TransactionExportFilterSet(HelpfulFilterSet):
+    """
+    Filters for the spend CSV export; separate so its date filters don't change the admin list.
+    """
+    start_date = filters.DateFilter(
+        field_name='created',
+        lookup_expr='date__gte',
+        input_formats=['%Y-%m-%d'],
+        help_text='Only include spend on/after this date (YYYY-MM-DD, UTC).',
+    )
+    end_date = filters.DateFilter(
+        field_name='created',
+        lookup_expr='date__lte',
+        input_formats=['%Y-%m-%d'],
+        help_text='Only include spend on/before this date, inclusive (YYYY-MM-DD, UTC).',
+    )
+
+    class Meta:
+        model = Transaction
+        form = TransactionExportFilterForm
+        fields = [
+            'subsidy_access_policy_uuid',
         ]
