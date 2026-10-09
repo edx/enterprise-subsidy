@@ -63,21 +63,19 @@ class TransactionExportFilterForm(forms.Form):
 
 class TransactionExportFilterSet(HelpfulFilterSet):
     """
-    Filters for the admin transactions CSV export.
-
-    Kept separate from ``TransactionAdminFilterSet`` so the export's date filters don't change the admin list.
+    Filters for the spend CSV export; separate so its date filters don't change the admin list.
     """
     start_date = filters.DateFilter(
         field_name='created',
         lookup_expr='date__gte',
         input_formats=['%Y-%m-%d'],
-        help_text='Only include transactions created on/after this date (YYYY-MM-DD, UTC).',
+        help_text='Only include spend on/after this date (YYYY-MM-DD, UTC).',
     )
     end_date = filters.DateFilter(
         field_name='created',
         lookup_expr='date__lte',
         input_formats=['%Y-%m-%d'],
-        help_text='Only include transactions created on/before this date, inclusive (YYYY-MM-DD, UTC).',
+        help_text='Only include spend on/before this date, inclusive (YYYY-MM-DD, UTC).',
     )
 
     class Meta:

@@ -26,13 +26,8 @@ def escape_formula(value):
 
 def format_amount_spent(transaction):
     """
-    Returns (amount, unit label) for a spend transaction.
-
-    Spend is recorded as a negative quantity, so it is negated rather than ``abs()``-ed: an unexpected positive
-    quantity then shows up as a negative amount instead of being hidden.
-
-    ``UnitChoices`` defines only ``usd_cents`` and ``seats``, and ``Ledger.unit`` defaults to ``usd_cents``, so
-    there is no third case to handle here.
+    Returns (amount, unit label). Spend is negative, so it is negated (not ``abs()``-ed) to keep a stray credit
+    visible.
     """
     spent = -transaction.quantity
     if transaction.ledger.unit == UnitChoices.SEATS:
@@ -42,9 +37,8 @@ def format_amount_spent(transaction):
 
 def get_spend_status(transaction):
     """
-    A committed reversal means the spend was refunded, so report it as such (as the admin portal's Spent table does).
+    A committed reversal means the spend was refunded, as in the admin portal's Spent table.
     """
-    # getattr() with a default handles the RelatedObjectDoesNotExist raised when there is no reversal.
     reversal = getattr(transaction, 'reversal', None)
     if reversal and reversal.state == TransactionStateChoices.COMMITTED:
         return 'Refunded'
@@ -66,7 +60,7 @@ SPEND_REPORT_HEADERS = (
 
 def spend_report_row(transaction):
     """
-    Returns one transaction's cells, in ``SPEND_REPORT_HEADERS`` order, with untrusted text escaped.
+    One transaction's cells, in ``SPEND_REPORT_HEADERS`` order, with untrusted text escaped.
     """
     amount, unit = format_amount_spent(transaction)
     return (
@@ -84,7 +78,7 @@ def spend_report_row(transaction):
 
 class _Echo:
     """
-    A file-like object whose ``write()`` returns the value, so ``csv.writer`` can produce one row at a time.
+    Lets ``csv.writer`` return each row instead of writing it.
     """
     def write(self, value):
         return value
@@ -92,8 +86,7 @@ class _Echo:
 
 def iter_spend_report_csv(transactions):
     """
-    Yields the spend report as CSV text, one row at a time, so the response can start before the whole report
-    has been rendered.
+    Yields the report as CSV text, one row at a time.
     """
     writer = csv.writer(_Echo())
     yield UTF8_BOM + writer.writerow(SPEND_REPORT_HEADERS)

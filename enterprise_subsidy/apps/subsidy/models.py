@@ -736,6 +736,16 @@ class Subsidy(TimeStampedModel):
             'reversal',
         )
 
+    def spend_transactions(self):
+        """
+        Committed learner redemptions, excluding deposits (incl. the starting balance) and adjustments.
+        """
+        return self.all_transactions().filter(
+            state=TransactionStateChoices.COMMITTED,
+            deposit__isnull=True,
+            adjustment__isnull=True,
+        )
+
     def transactions_for_learner(self, lms_user_id):
         return self.all_transactions().filter(lms_user_id=lms_user_id)
 

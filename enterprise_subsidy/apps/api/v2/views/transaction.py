@@ -11,11 +11,12 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
-from openedx_ledger.models import LedgerLockAttemptFailed, Transaction, TransactionStateChoices
+from openedx_ledger.models import LedgerLockAttemptFailed, Transaction
 from requests.exceptions import HTTPError
 from rest_framework import filters, generics, permissions, status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.exceptions import APIException, NotFound, ParseError, PermissionDenied, Throttled
+from rest_framework.renderers import BaseRenderer, JSONRenderer
 
 from enterprise_subsidy.apps.api.csv_exports import iter_spend_report_csv
 from enterprise_subsidy.apps.api.exceptions import ErrorCodes, TransactionCreationAPIException
@@ -265,35 +266,39 @@ class TransactionUserList(TransactionBaseViewMixin, generics.ListAPIView):
             raise NotFound(detail='The requested Subsidy record does not exist.')
 
 
+class CSVPassthroughRenderer(BaseRenderer):
+    """
+    Accepts ``Accept: text/csv``. Only errors reach a renderer (the export streams), and they stay JSON.
+    """
+    media_type = 'text/csv'
+    format = 'csv'
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return JSONRenderer().render(data)
+
+
 class TransactionAdminExport(TransactionBaseViewMixin, generics.GenericAPIView):
     """
-    Streams a subsidy's learner spend as a CSV report, for admins of the subsidy's enterprise customer (and operators).
-
-    Only committed learner redemptions are included, matching the admin portal's Spent table: deposits (e.g. the
-    subsidy's starting balance) and balance adjustments are ledger transactions too, but are not learner spend.
+    Streams a subsidy's learner spend as CSV, for admins of its enterprise and operators.
     """
     filter_backends = [drf_filters.DjangoFilterBackend, filters.SearchFilter]
     filterset_class = TransactionExportFilterSet
     search_fields = ['lms_user_email', 'content_title']
+    renderer_classes = [JSONRenderer, CSVPassthroughRenderer]
+    # DRF maps HEAD onto get(), which would build the whole report for nothing.
+    http_method_names = ['get', 'options']
+    # The inherited serializer_class and pagination_class are unused: rows go straight to CSV.
 
     def get_queryset(self):
         """
-        Committed learner spend for the requested subsidy, newest first, joining only the relations the report reads.
+        The subsidy's spend, newest first.
         """
-        return Transaction.objects.select_related(
-            'ledger',
-            'reversal',
-        ).filter(
-            ledger__subsidy=self.subsidy,
-            state=TransactionStateChoices.COMMITTED,
-            deposit__isnull=True,
-            adjustment__isnull=True,
-        ).order_by('-created', 'uuid')
+        return self.subsidy.spend_transactions().select_related('ledger').order_by('-created', 'uuid')
 
     def check_requested_enterprise_customer(self):
         """
-        Callers acting with all-access credentials (e.g. enterprise-access, on behalf of an enterprise admin) may pass
-        the enterprise they're acting for. If it doesn't own the subsidy, respond as if the subsidy didn't exist.
+        All-access callers (e.g. enterprise-access) may pass the enterprise they act for; 404 if it doesn't own the
+        subsidy.
         """
         requested_customer_uuid = self.request.query_params.get('enterprise_customer_uuid')
         if not requested_customer_uuid:
@@ -342,11 +347,12 @@ class TransactionAdminExport(TransactionBaseViewMixin, generics.GenericAPIView):
     @permission_required(PERMISSION_CAN_READ_ALL_TRANSACTIONS, fn=get_subsidy_customer_uuid_from_view)
     def get(self, request, subsidy_uuid):
         """
-        Streams the learner spend report for the given ``subsidy_uuid`` as a CSV file attachment.
+        Streams the spend report for ``subsidy_uuid`` as a CSV attachment.
         """
         self.check_requested_enterprise_customer()
-        # This endpoint is reachable both directly with an admin's JWT and via enterprise-access acting with
-        # service credentials, so record the bulk read of learner emails here rather than relying on the caller.
+        # Validates the filters (400 on bad input) before the export is logged as started.
+        transactions = self.filter_queryset(self.get_queryset())
+        # Audit the bulk read of learner emails here, since callers may use service credentials.
         logger.info(
             'Learner credit spend export started: user_id=%s, subsidy_uuid=%s, '
             'enterprise_customer_uuid=%s, subsidy_access_policy_uuid=%s',
@@ -355,7 +361,6 @@ class TransactionAdminExport(TransactionBaseViewMixin, generics.GenericAPIView):
             self.subsidy.enterprise_customer_uuid,
             request.query_params.get('subsidy_access_policy_uuid'),
         )
-        transactions = self.filter_queryset(self.get_queryset())
         response = StreamingHttpResponse(
             iter_spend_report_csv(transactions.iterator()),
             content_type='text/csv; charset=utf-8',
