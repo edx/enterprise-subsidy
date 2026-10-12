@@ -37,12 +37,20 @@ def format_amount_spent(transaction):
 
 def get_spend_status(transaction):
     """
-    A committed reversal means the spend was refunded, as in the admin portal's Spent table.
+    A committed reversal means the spend was refunded, as in the admin portal's Spent table. Otherwise the row is
+    plain spend: only committed transactions are exported, and "Committed" is ledger jargon admins wouldn't recognize.
     """
     reversal = getattr(transaction, 'reversal', None)
     if reversal and reversal.state == TransactionStateChoices.COMMITTED:
         return 'Refunded'
-    return transaction.state.capitalize()
+    return 'Spent'
+
+
+def format_datetime(value):
+    """
+    A UTC timestamp cell, or blank when the value is unknown (e.g. a course run start date that was never captured).
+    """
+    return value.strftime('%Y-%m-%d %H:%M:%S') if value else ''
 
 
 SPEND_REPORT_HEADERS = (
@@ -51,6 +59,7 @@ SPEND_REPORT_HEADERS = (
     'Course Title',
     'Course Key',
     'Date Spent (UTC)',
+    'Course Start Date (UTC)',
     'Amount Spent',
     'Unit',
     'Status',
@@ -68,7 +77,8 @@ def spend_report_row(transaction):
         transaction.lms_user_id,
         escape_formula(transaction.content_title),
         escape_formula(transaction.content_key),
-        transaction.created.strftime('%Y-%m-%d %H:%M:%S'),
+        format_datetime(transaction.created),
+        format_datetime(transaction.course_run_start_date),
         amount,
         unit,
         get_spend_status(transaction),
