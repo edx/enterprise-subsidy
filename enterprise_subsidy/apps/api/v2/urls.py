@@ -5,6 +5,10 @@ Listing transactions for admins and operators:
 
   GET  /api/v2/subsidies/<subsidy_uuid>/admin/transactions/
 
+Exporting learner spend as CSV for admins and operators:
+
+  GET  /api/v2/subsidies/<subsidy_uuid>/admin/transactions/export/
+
 Creating transactions for operators:
 
   POST  /api/v2/subsidies/<subsidy_uuid>/admin/transactions/
@@ -16,7 +20,11 @@ User-scoped transactions list:
 from django.urls import path
 
 from enterprise_subsidy.apps.api.v2.views.deposit import DepositAdminCreate
-from enterprise_subsidy.apps.api.v2.views.transaction import TransactionAdminListCreate, TransactionUserList
+from enterprise_subsidy.apps.api.v2.views.transaction import (
+    TransactionAdminExport,
+    TransactionAdminListCreate,
+    TransactionUserList
+)
 
 app_name = 'v2'
 
@@ -26,6 +34,11 @@ urlpatterns = [
         'subsidies/<subsidy_uuid>/admin/transactions/',
         TransactionAdminListCreate.as_view(),
         name='transaction-admin-list-create',
+    ),
+    path(
+        'subsidies/<uuid:subsidy_uuid>/admin/transactions/export/',
+        TransactionAdminExport.as_view(),
+        name='transaction-admin-export',
     ),
     path(
         'subsidies/<subsidy_uuid>/transactions/',
