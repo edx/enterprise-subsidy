@@ -8,7 +8,7 @@ anyio==4.15.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-    #   httpx
+    #   httpx2
 asgiref==3.12.1
     # via
     #   -r requirements/quality.txt
@@ -16,7 +16,7 @@ asgiref==3.12.1
     #   django
     #   django-cors-headers
     #   social-auth-app-django
-astroid==4.0.4
+astroid==4.3.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -44,7 +44,7 @@ backoff==2.2.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-cachetools==7.2.0
+cachetools==7.2.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -55,8 +55,6 @@ certifi==2026.7.22
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   confluent-kafka
-    #   httpcore
-    #   httpx
     #   requests
 cffi==2.1.1
     # via
@@ -64,7 +62,7 @@ cffi==2.1.1
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-charset-normalizer==3.5.1
+charset-normalizer==3.5.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -93,16 +91,16 @@ colorama==0.4.6
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   tox
-confluent-kafka[avro,schema-registry]==2.15.1
+confluent-kafka[avro,schema-registry]==2.16.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-coverage[toml]==7.16.1
+coverage[toml]==7.16.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==50.0.1
+cryptography==50.0.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -131,7 +129,7 @@ distlib==0.4.3
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   virtualenv
-django==5.2.17
+django==5.2.18
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -182,7 +180,7 @@ django-extensions==4.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   openedx-ledger
-django-filter==26.1
+django-filter==26.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -222,7 +220,7 @@ djangoql==0.19.1
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   openedx-ledger
-djangorestframework==3.18.1
+djangorestframework==3.18.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -230,7 +228,7 @@ djangorestframework==3.18.1
     #   drf-spectacular
     #   drf-yasg
     #   edx-drf-extensions
-dnspython==2.8.0
+dnspython==2.9.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -248,15 +246,15 @@ drf-spectacular==0.30.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-drf-yasg==1.21.15
+drf-yasg==1.21.17
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-auth-backends==5.0.0
+edx-auth-backends==5.1.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-ccx-keys==2.0.2
+edx-ccx-keys==2.1.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -266,7 +264,7 @@ edx-django-release-util==1.5.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   openedx-ledger
-edx-django-utils==8.0.2
+edx-django-utils==8.1.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -283,7 +281,7 @@ edx-drf-extensions==10.9.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-rbac
-edx-event-bus-kafka==6.1.0
+edx-event-bus-kafka==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -291,7 +289,7 @@ edx-lint==6.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-edx-opaque-keys[django]==4.0.0
+edx-opaque-keys[django]==4.0.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -317,18 +315,18 @@ factory-boy==3.3.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-faker==40.39.0
+faker==40.41.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   factory-boy
-fastavro==1.12.2
+fastavro==1.13.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   confluent-kafka
     #   openedx-events
-filelock==4.0.3
+filelock==4.0.12
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -343,13 +341,13 @@ h11==0.16.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-    #   httpcore
-httpcore==1.0.9
+    #   httpcore2
+httpcore2==2.13.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-    #   httpx
-httpx==0.28.1
+    #   httpx2
+httpx2==2.13.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -363,20 +361,25 @@ idna==3.20
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   anyio
-    #   httpx
+    #   httpx2
     #   requests
+importlib-resources==7.1.0
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   swagger-spec-validator
 inflection==0.5.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   drf-spectacular
     #   drf-yasg
-iniconfig==2.3.0
+iniconfig==2.3.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   pytest
-isort==9.0.1
+isort==9.0.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -418,6 +421,7 @@ jsonschema==4.26.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   drf-spectacular
+    #   swagger-spec-validator
 jsonschema-specifications==2025.9.1
     # via
     #   -r requirements/quality.txt
@@ -431,7 +435,7 @@ markdown-it-py==4.2.0
     # via
     #   -r requirements/quality.txt
     #   rich
-markupsafe==3.0.3
+markupsafe==3.0.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -468,14 +472,14 @@ nh3==0.3.7
     # via
     #   -r requirements/quality.txt
     #   readme-renderer
-oauthlib==3.3.1
+oauthlib==4.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   getsmarter-api-clients
     #   requests-oauthlib
     #   social-auth-core
-openedx-atlas==0.7.1
+openedx-atlas==0.7.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -485,7 +489,7 @@ openedx-events==11.2.0
     #   -r requirements/test.txt
     #   edx-event-bus-kafka
     #   openedx-ledger
-openedx-ledger==2.0.0
+openedx-ledger==2.1.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -498,7 +502,8 @@ packaging==26.3
     #   pytest
     #   tox
     #   twine
-platformdirs==4.11.12
+    #   virtualenv
+platformdirs==4.12.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -524,7 +529,7 @@ psutil==7.2.2
     #   edx-django-utils
 pycodestyle==2.15.0
     # via -r requirements/quality.txt
-pycparser==3.0
+pycparser==3.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -538,7 +543,7 @@ pygments==2.21.0
     #   pytest
     #   readme-renderer
     #   rich
-pyjwt[crypto]==2.15.0
+pyjwt[crypto]==2.15.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -547,7 +552,7 @@ pyjwt[crypto]==2.15.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   social-auth-core
-pylint==4.0.9
+pylint==4.1.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -575,7 +580,7 @@ pymemcache==4.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-pymongo==4.18.2
+pymongo==4.18.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -585,7 +590,7 @@ pynacl==1.6.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-pyproject-api==1.11.2
+pyproject-api==1.11.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -614,7 +619,7 @@ python-discovery==1.6.1
     #   -r requirements/test.txt
     #   tox
     #   virtualenv
-python-slugify==9.1.1
+python-slugify==9.1.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -624,7 +629,7 @@ python3-openid==3.2.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   social-auth-core
-pytz==2026.4
+pytz==2026.5
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -640,6 +645,7 @@ pyyaml==6.0.3
     #   drf-yasg
     #   edx-django-release-util
     #   responses
+    #   swagger-spec-validator
 readme-renderer==46.0
     # via
     #   -r requirements/quality.txt
@@ -689,7 +695,7 @@ rich==15.0.0
     # via
     #   -r requirements/quality.txt
     #   twine
-rpds-py==2026.6.3
+rpds-py==2026.9.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -746,6 +752,11 @@ stevedore==5.9.1
     #   code-annotations
     #   edx-django-utils
     #   edx-opaque-keys
+swagger-spec-validator==3.0.4
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   drf-yasg
 text-unidecode==1.3
     # via
     #   -r requirements/quality.txt
@@ -762,10 +773,16 @@ tomlkit==0.15.1
     #   -r requirements/test.txt
     #   edx-lint
     #   pylint
-tox==4.64.2
+tox==4.64.10
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
+truststore==0.10.4
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   httpcore2
+    #   httpx2
 twine==7.0.0
     # via -r requirements/quality.txt
 typing-extensions==4.16.0
@@ -774,7 +791,9 @@ typing-extensions==4.16.0
     #   -r requirements/test.txt
     #   anyio
     #   edx-opaque-keys
+    #   httpx2
     #   referencing
+    #   swagger-spec-validator
     #   tox
 uritemplate==4.2.0
     # via
@@ -790,7 +809,7 @@ urllib3==2.8.0
     #   requests
     #   responses
     #   twine
-virtualenv==21.12.1
+virtualenv==21.14.6
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
