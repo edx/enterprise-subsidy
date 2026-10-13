@@ -1047,6 +1047,7 @@ class TransactionAdminExportViewTests(APITestMixin):
     def test_admin_exports_csv(self):
         """A download client may ask for text/csv; the file starts with a BOM so Excel reads non-ASCII as UTF-8."""
         self.spend.content_title = 'Introducción a la programación'
+        self.spend.course_run_start_date = datetime(2024, 2, 1, 9, 0, tzinfo=timezone.utc)
         self.spend.save()
         self.set_up_admin()
 
@@ -1063,11 +1064,22 @@ class TransactionAdminExportViewTests(APITestMixin):
             'Course Title': 'Introducción a la programación',
             'Course Key': self.content_key,
             'Date Spent (UTC)': '2024-01-10 15:30:00',
+            'Course Start Date (UTC)': '2024-02-01 09:00:00',
             'Amount Spent': '10.50',
             'Unit': 'USD',
-            'Status': 'Committed',
+            'Status': 'Spent',
             'Policy UUID': str(self.policy_uuid),
         }]
+
+    def test_unknown_course_start_date_is_blank(self):
+        """A spend whose course run start date was never captured exports a blank cell, as the Spent table does."""
+        self.spend.course_run_start_date = None
+        self.spend.save()
+        self.set_up_admin()
+
+        _, rows = self._export()
+
+        assert [row['Course Start Date (UTC)'] for row in rows] == ['']
 
     def test_only_committed_spend_unpaginated_newest_first_with_refunds(self):
         """Only committed spend, unpaginated and newest first; only a committed reversal is a refund."""
@@ -1087,7 +1099,7 @@ class TransactionAdminExportViewTests(APITestMixin):
 
         assert len(rows) == 33
         assert [(row['Amount Spent'], row['Status']) for row in rows[:3]] == [
-            ('2.50', 'Refunded'), ('10.00', 'Committed'), ('10.50', 'Committed'),
+            ('2.50', 'Refunded'), ('10.00', 'Spent'), ('10.50', 'Spent'),
         ]
 
     @ddt.data(

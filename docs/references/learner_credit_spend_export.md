@@ -27,8 +27,8 @@ calls this endpoint with its own operator credentials.
 | 404 | Malformed `subsidy_uuid` (the route uses a `uuid` converter; a plain one would 500), or `enterprise_customer_uuid` doesn't own the subsidy. |
 | 405 | Any method other than GET, including HEAD (DRF would otherwise run the whole export for it). |
 
-Columns: Learner Email, Learner ID, Course Title, Course Key, Date Spent (UTC), Amount Spent, Unit, Status
-(`Committed` / `Refunded`), Policy UUID.
+Columns: Learner Email, Learner ID, Course Title, Course Key, Date Spent (UTC), Course Start Date (UTC), Amount
+Spent, Unit, Status (`Spent` / `Refunded`), Policy UUID.
 
 ## Gotchas
 
@@ -37,7 +37,11 @@ Columns: Learner Email, Learner ID, Course Title, Course Key, Date Spent (UTC), 
   comes from a database assignment would pass the check without that filter. A bulk export of learner emails must use
   the admin-level permission, like the v2 admin list.
 - **What counts as spend:** only `COMMITTED` transactions that are neither deposits (including the starting balance)
-  nor adjustments; see `Subsidy.spend_transactions()`. A committed reversal is reported as `Refunded`.
+  nor adjustments; see `Subsidy.spend_transactions()`. A committed reversal is reported as `Refunded`;
+  everything else as `Spent` (not the ledger's `Committed`, which means nothing to an admin).
+- **Course Start Date** mirrors the Spent table's "Start Date" column: it is `Transaction.course_run_start_date`,
+  captured when the spend was made (or by `backpopulate_transaction_course_run_start_date`), so it can be stale if
+  the run was rescheduled, and is blank when it was never captured.
 - **Amounts:** spend is a negative quantity. It is negated (not `abs()`-ed) so an unexpected positive row is visible
   as a negative amount. `usd_cents` is converted to dollars with `Decimal`; `seats` is reported as a count.
 - **Spreadsheet formula injection:** email, course title and course key come from learners or partners. Cells
