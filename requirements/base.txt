@@ -23,9 +23,9 @@ avro==1.12.2
     # via confluent-kafka
 backoff==2.2.1
     # via -r requirements/base.in
-cachetools==7.2.2
+cachetools==7.2.4
     # via confluent-kafka
-certifi==2026.7.22
+certifi==2026.10.19
     # via
     #   confluent-kafka
     #   requests
@@ -183,9 +183,9 @@ getsmarter-api-clients==0.6.3
     # via -r requirements/base.in
 h11==0.16.0
     # via httpcore2
-httpcore2==2.13.1
+httpcore2==2.16.0
     # via httpx2
-httpx2==2.13.1
+httpx2==2.16.0
     # via confluent-kafka
 idna==3.20
     # via
@@ -200,7 +200,7 @@ inflection==0.5.1
     #   drf-yasg
 jinja2==3.1.6
     # via code-annotations
-joserfc==1.7.5
+joserfc==1.7.7
     # via authlib
 jsonfield2==4.0.0.post0
     # via
