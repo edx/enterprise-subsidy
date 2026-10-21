@@ -48,12 +48,12 @@ beautifulsoup4==4.15.0
     # via pydata-sphinx-theme
 build==1.6.1
     # via -r requirements/doc.in
-cachetools==7.2.2
+cachetools==7.2.4
     # via
     #   -r requirements/test.txt
     #   confluent-kafka
     #   tox
-certifi==2026.7.22
+certifi==2026.10.19
     # via
     #   -r requirements/test.txt
     #   confluent-kafka
@@ -112,7 +112,7 @@ dill==0.4.1
     # via
     #   -r requirements/test.txt
     #   pylint
-distlib==0.4.3
+distlib==0.4.4
     # via
     #   -r requirements/test.txt
     #   virtualenv
@@ -275,7 +275,7 @@ fastavro==1.13.1
     #   -r requirements/test.txt
     #   confluent-kafka
     #   openedx-events
-filelock==4.2.0
+filelock==4.2.4
     # via
     #   -r requirements/test.txt
     #   python-discovery
@@ -287,11 +287,11 @@ h11==0.16.0
     # via
     #   -r requirements/test.txt
     #   httpcore2
-httpcore2==2.13.1
+httpcore2==2.16.0
     # via
     #   -r requirements/test.txt
     #   httpx2
-httpx2==2.13.1
+httpx2==2.16.0
     # via
     #   -r requirements/test.txt
     #   confluent-kafka
@@ -338,7 +338,7 @@ jinja2==3.1.6
     #   code-annotations
     #   pydata-sphinx-theme
     #   sphinx
-joserfc==1.7.5
+joserfc==1.7.7
     # via
     #   -r requirements/test.txt
     #   authlib
@@ -411,7 +411,7 @@ packaging==26.3
     #   tox
     #   twine
     #   virtualenv
-platformdirs==4.13.3
+platformdirs==4.13.5
     # via
     #   -r requirements/test.txt
     #   pylint
@@ -485,7 +485,7 @@ pynacl==1.6.2
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
-pyproject-api==1.11.7
+pyproject-api==1.12.0
     # via
     #   -r requirements/test.txt
     #   tox
@@ -502,7 +502,7 @@ pytest-django==4.14.0
     # via -r requirements/test.txt
 python-dateutil==2.9.0.post0
     # via -r requirements/test.txt
-python-discovery==1.6.2
+python-discovery==1.6.4
     # via
     #   -r requirements/test.txt
     #   tox
@@ -612,7 +612,7 @@ social-auth-core==4.9.1
     #   social-auth-app-django
 soupsieve==3.0.3
     # via beautifulsoup4
-sphinx==9.1.0
+sphinx==9.1.1
     # via
     #   -r requirements/doc.in
     #   pydata-sphinx-theme
@@ -625,7 +625,7 @@ sphinxcontrib-devhelp==2.0.0
     # via sphinx
 sphinxcontrib-htmlhelp==2.1.0
     # via sphinx
-sphinxcontrib-jsmath==1.0.1
+sphinxcontrib-jsmath==2.0.0
     # via sphinx
 sphinxcontrib-qthelp==2.0.0
     # via sphinx
@@ -654,12 +654,12 @@ tomli-w==1.2.0
     # via
     #   -r requirements/test.txt
     #   tox
-tomlkit==0.15.1
+tomlkit==0.15.2
     # via
     #   -r requirements/test.txt
     #   edx-lint
     #   pylint
-tox==4.65.6
+tox==4.67.1
     # via -r requirements/test.txt
 truststore==0.10.5
     # via
@@ -690,7 +690,7 @@ urllib3==2.8.0
     #   requests
     #   responses
     #   twine
-virtualenv==21.14.8
+virtualenv==21.14.12
     # via
     #   -r requirements/test.txt
     #   tox
