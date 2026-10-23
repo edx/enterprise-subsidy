@@ -95,7 +95,7 @@ confluent-kafka[avro,schema-registry]==2.16.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-coverage[toml]==7.16.2
+coverage[toml]==7.17.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -529,7 +529,7 @@ psutil==7.2.2
     #   edx-django-utils
 pycodestyle==2.15.0
     # via -r requirements/quality.txt
-pycparser==3.11
+pycparser==3.12
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -609,7 +609,7 @@ pytest-django==4.14.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-python-dateutil==2.9.0.post0
+python-dateutil==3.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -795,6 +795,11 @@ typing-extensions==4.16.0
     #   referencing
     #   swagger-spec-validator
     #   tox
+tzdata==2026.5
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   python-dateutil
 uritemplate==4.2.0
     # via
     #   -r requirements/quality.txt
@@ -809,7 +814,7 @@ urllib3==2.8.0
     #   requests
     #   responses
     #   twine
-virtualenv==21.14.12
+virtualenv==21.14.13
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
