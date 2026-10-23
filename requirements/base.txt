@@ -238,7 +238,7 @@ ply==3.11
     # via djangoql
 psutil==7.2.2
     # via edx-django-utils
-pycparser==3.11
+pycparser==3.12
     # via cffi
 pyjwt[crypto]==2.15.1
     # via
@@ -253,7 +253,7 @@ pymongo==4.19.0
     # via edx-opaque-keys
 pynacl==1.6.2
     # via edx-django-utils
-python-dateutil==2.9.0.post0
+python-dateutil==3.0.0
     # via -r requirements/base.in
 python-slugify==9.1.3
     # via code-annotations
@@ -338,6 +338,8 @@ typing-extensions==4.16.0
     #   httpx2
     #   referencing
     #   swagger-spec-validator
+tzdata==2026.5
+    # via python-dateutil
 uritemplate==4.2.0
     # via
     #   drf-spectacular

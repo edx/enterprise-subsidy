@@ -38,5 +38,5 @@ tox==4.67.1
     # via -r requirements/ci.in
 typing-extensions==4.16.0
     # via tox
-virtualenv==21.14.12
+virtualenv==21.14.13
     # via tox

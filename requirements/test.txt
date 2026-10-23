@@ -73,7 +73,7 @@ colorama==0.4.6
     # via tox
 confluent-kafka[avro,schema-registry]==2.16.0
     # via -r requirements/base.txt
-coverage[toml]==7.16.2
+coverage[toml]==7.17.0
     # via
     #   -r requirements/test.in
     #   pytest-cov
@@ -356,7 +356,7 @@ psutil==7.2.2
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
-pycparser==3.11
+pycparser==3.12
     # via
     #   -r requirements/base.txt
     #   cffi
@@ -404,7 +404,7 @@ pytest-cov==7.1.0
     # via -r requirements/test.in
 pytest-django==4.14.0
     # via -r requirements/test.in
-python-dateutil==2.9.0.post0
+python-dateutil==3.0.0
     # via -r requirements/base.txt
 python-discovery==1.6.4
     # via
@@ -533,6 +533,10 @@ typing-extensions==4.16.0
     #   referencing
     #   swagger-spec-validator
     #   tox
+tzdata==2026.5
+    # via
+    #   -r requirements/base.txt
+    #   python-dateutil
 uritemplate==4.2.0
     # via
     #   -r requirements/base.txt
@@ -543,7 +547,7 @@ urllib3==2.8.0
     #   -r requirements/base.txt
     #   requests
     #   responses
-virtualenv==21.14.12
+virtualenv==21.14.13
     # via tox
 
 # The following packages are considered to be unsafe in a requirements file:
