@@ -27,3 +27,8 @@ PERMISSION_CAN_WRITE_SUBSIDIES = "subsidy.can_write_subsidies"
 # Provide a convenience permission which should never be granted.  This is helpful for being explicit when overriding
 # `get_permission_required()`.
 PERMISSION_NOT_GRANTED = 'subsidy.not_granted'
+
+# Sales contract reference provider for top-up deposits funded by a Stripe PaymentIntent (seeded by migration 0024).
+# Not part of SubsidyReferenceChoices, because a subsidy is never created by a PaymentIntent.
+STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG = "stripe_payment_intent"
+STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_NAME = "Stripe PaymentIntent"
