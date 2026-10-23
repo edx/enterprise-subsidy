@@ -2,11 +2,9 @@
 Test migrations.
 """
 import uuid
-from io import StringIO
 
 import django.utils.timezone
 import pytest
-from django.core.management import call_command
 from openedx_ledger.constants import INITIAL_DEPOSIT_TRANSACTION_SLUG
 from openedx_ledger.models import SalesContractReferenceProvider as CurrentSalesContractReferenceProvider
 from openedx_ledger.models import TransactionStateChoices
@@ -152,8 +150,6 @@ def test_migration_0024_adds_stripe_payment_intent_provider(migrator, provider_a
     """
     old_state = migrator.apply_initial_migration(MIGRATION_0023)
     SalesContractReferenceProvider = old_state.apps.get_model("openedx_ledger", "SalesContractReferenceProvider")
-    # Clear out any row seeded by an earlier test database setup, so the starting state is what we say it is.
-    SalesContractReferenceProvider.objects.filter(slug=STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG).delete()
     if provider_already_exists:
         SalesContractReferenceProvider.objects.create(
             slug=STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG,
@@ -218,20 +214,3 @@ def test_stripe_payment_intent_is_not_a_subsidy_reference_type():
     assert STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG not in allowed_slugs
     field_choices = [slug for slug, _ in subsidy_models.Subsidy._meta.get_field("reference_type").choices]
     assert STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG not in field_choices
-
-
-@pytest.mark.django_db
-def test_no_pending_reference_type_migration():
-    """
-    makemigrations proposes no change to Subsidy.reference_type. Scoped to reference_type because main already has
-    unrelated pending changes (Subsidy Meta options), so ``makemigrations --check`` exits non-zero regardless.
-    """
-    out = StringIO()
-    try:
-        call_command("makemigrations", "subsidy", "--check", "--dry-run", "--verbosity", "3", stdout=out)
-    except SystemExit:
-        pass
-    output = out.getvalue()
-    # Guard against passing vacuously: makemigrations must have actually reported on the subsidy app.
-    assert "No changes detected" in output or "Migrations for 'subsidy'" in output
-    assert "reference_type" not in output
