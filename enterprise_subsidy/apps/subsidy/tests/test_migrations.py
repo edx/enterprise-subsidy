@@ -8,6 +8,12 @@ import pytest
 from openedx_ledger.constants import INITIAL_DEPOSIT_TRANSACTION_SLUG
 from openedx_ledger.models import TransactionStateChoices
 
+from enterprise_subsidy.apps.subsidy import models as subsidy_models
+from enterprise_subsidy.apps.subsidy.constants import STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG
+
+MIGRATION_0023 = ("subsidy", "0023_mariadb_uuid_conversion")
+MIGRATION_0024 = ("subsidy", "0024_add_stripe_payment_intent_reference_provider")
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
@@ -120,3 +126,76 @@ def test_migration_0022_backfill_initial_deposits(
     assert historical_deposit.sales_contract_reference_provider == deposit.sales_contract_reference_provider
     assert historical_deposit.history_type == "+"
     assert historical_deposit.history_change_reason == "Data migration to backfill initial deposits"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("provider_already_exists", [False, True])
+def test_migration_0024_adds_stripe_payment_intent_provider(migrator, provider_already_exists):
+    """
+    The forward migration creates exactly one stripe_payment_intent provider, and is harmless to re-run when the
+    provider already exists.
+    """
+    old_state = migrator.apply_initial_migration(MIGRATION_0023)
+    SalesContractReferenceProvider = old_state.apps.get_model("openedx_ledger", "SalesContractReferenceProvider")
+    if provider_already_exists:
+        SalesContractReferenceProvider.objects.create(
+            slug=STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG,
+            name="Pre-existing name",
+        )
+
+    new_state = migrator.apply_tested_migration(MIGRATION_0024)
+
+    SalesContractReferenceProvider = new_state.apps.get_model("openedx_ledger", "SalesContractReferenceProvider")
+    providers = SalesContractReferenceProvider.objects.filter(slug=STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG)
+    assert providers.count() == 1
+    if provider_already_exists:
+        # get_or_create must not overwrite an existing row.
+        assert providers.get().name == "Pre-existing name"
+    else:
+        assert providers.get().name == "Stripe PaymentIntent"
+
+
+@pytest.mark.django_db
+def test_migration_0024_reverse_deletes_nothing(migrator):
+    """
+    Reversing 0024 must keep the provider row, and therefore every Deposit citing it (the FK cascades on delete).
+    """
+    migrator.apply_initial_migration(MIGRATION_0023)
+    new_state = migrator.apply_tested_migration(MIGRATION_0024)
+
+    Ledger = new_state.apps.get_model("openedx_ledger", "Ledger")
+    Transaction = new_state.apps.get_model("openedx_ledger", "Transaction")
+    Deposit = new_state.apps.get_model("openedx_ledger", "Deposit")
+    SalesContractReferenceProvider = new_state.apps.get_model("openedx_ledger", "SalesContractReferenceProvider")
+
+    ledger = Ledger.objects.create()
+    transaction = Transaction.objects.create(
+        ledger=ledger,
+        idempotency_key="top-up-deposit",
+        quantity=100,
+        state=TransactionStateChoices.COMMITTED,
+    )
+    deposit = Deposit.objects.create(
+        ledger=ledger,
+        desired_deposit_quantity=100,
+        transaction=transaction,
+        sales_contract_reference_id="pi_3Qexample",
+        sales_contract_reference_provider=SalesContractReferenceProvider.objects.get(
+            slug=STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG,
+        ),
+    )
+
+    reverted_state = migrator.apply_tested_migration(MIGRATION_0023)
+
+    SalesContractReferenceProvider = reverted_state.apps.get_model("openedx_ledger", "SalesContractReferenceProvider")
+    Deposit = reverted_state.apps.get_model("openedx_ledger", "Deposit")
+    assert SalesContractReferenceProvider.objects.filter(slug=STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG).exists()
+    assert Deposit.objects.filter(uuid=deposit.uuid).exists()
+
+
+def test_stripe_payment_intent_is_not_a_subsidy_reference_type():
+    """
+    A subsidy is never created by a PaymentIntent, so the slug must not be an allowed Subsidy.reference_type.
+    """
+    allowed_slugs = [slug for slug, _ in subsidy_models.SubsidyReferenceChoices.CHOICES]
+    assert STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG not in allowed_slugs

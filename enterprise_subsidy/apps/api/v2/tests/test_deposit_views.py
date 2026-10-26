@@ -11,6 +11,7 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 
 from enterprise_subsidy.apps.api.v1.tests.mixins import STATIC_ENTERPRISE_UUID, APITestMixin
+from enterprise_subsidy.apps.subsidy.constants import STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG
 from enterprise_subsidy.apps.subsidy.models import SubsidyReferenceChoices
 from enterprise_subsidy.apps.subsidy.tests.factories import SubsidyFactory
 
@@ -70,6 +71,36 @@ class DepositCreateViewTests(APITestMixin):
                 "sales_contract_reference_provider": DEFAULT_SALES_CONTRACT_REFERENCE_PROVIDER_SLUG,
                 # Test getting a null metadata value.
                 "metadata": None,
+            },
+            "expected_response_status": status.HTTP_201_CREATED,
+        },
+        {
+            "subsidy_active": True,
+            # Top-up deposit citing the Stripe PaymentIntent which funded it (provider seeded by migration 0024).
+            "creation_request_data": {
+                "desired_deposit_quantity": 100,
+                "sales_contract_reference_id": "pi_3Qexample",
+                "sales_contract_reference_provider": STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG,
+            },
+            "expected_response_status": status.HTTP_201_CREATED,
+        },
+        {
+            "subsidy_active": True,
+            # The exact request chunk 8 (enterprise-access, paid → deposited) sends for a top-up.
+            "creation_request_data": {
+                "desired_deposit_quantity": 100000,
+                "sales_contract_reference_id": "pi_3Qexample",
+                "sales_contract_reference_provider": STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG,
+                "idempotency_key": "lc-top-up-3f1c2a9e-0000-4000-8000-000000000001",
+                "metadata": {
+                    "source": "learner_credit_top_up",
+                    "learner_credit_top_up_uuid": "3f1c2a9e-0000-4000-8000-000000000001",
+                    "top_up_policy_uuid": "3f1c2a9e-0000-4000-8000-000000000002",
+                    "initiated_by_lms_user_id": 3,
+                    "stripe_payment_intent_id": "pi_3Qexample",
+                    "discount_rate": "0.00",
+                    "charge_amount_cents": 100000,
+                },
             },
             "expected_response_status": status.HTTP_201_CREATED,
         },
@@ -159,6 +190,8 @@ class DepositCreateViewTests(APITestMixin):
             assert Deposit.objects.count() == 2
             created_deposit = Deposit.objects.get(uuid=response.data["uuid"])
             assert created_deposit.transaction.metadata == (creation_request_data.get("metadata") or {})
+            if "idempotency_key" in creation_request_data:
+                assert created_deposit.transaction.idempotency_key == creation_request_data["idempotency_key"]
         else:
             assert Deposit.objects.count() == 1
 
