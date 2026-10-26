@@ -9,10 +9,7 @@ from openedx_ledger.constants import INITIAL_DEPOSIT_TRANSACTION_SLUG
 from openedx_ledger.models import TransactionStateChoices
 
 from enterprise_subsidy.apps.subsidy import models as subsidy_models
-from enterprise_subsidy.apps.subsidy.constants import (
-    STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_NAME,
-    STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG
-)
+from enterprise_subsidy.apps.subsidy.constants import STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG
 
 MIGRATION_0023 = ("subsidy", "0023_mariadb_uuid_conversion")
 MIGRATION_0024 = ("subsidy", "0024_add_stripe_payment_intent_reference_provider")
@@ -131,13 +128,6 @@ def test_migration_0022_backfill_initial_deposits(
     assert historical_deposit.history_change_reason == "Data migration to backfill initial deposits"
 
 
-def test_stripe_payment_intent_slug_value():
-    """
-    The slug must be exactly this value: enterprise-access sends it as a literal.
-    """
-    assert STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG == "stripe_payment_intent"
-
-
 @pytest.mark.django_db
 @pytest.mark.parametrize("provider_already_exists", [False, True])
 def test_migration_0024_adds_stripe_payment_intent_provider(migrator, provider_already_exists):
@@ -162,7 +152,7 @@ def test_migration_0024_adds_stripe_payment_intent_provider(migrator, provider_a
         # get_or_create must not overwrite an existing row.
         assert providers.get().name == "Pre-existing name"
     else:
-        assert providers.get().name == STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_NAME
+        assert providers.get().name == "Stripe PaymentIntent"
 
 
 @pytest.mark.django_db

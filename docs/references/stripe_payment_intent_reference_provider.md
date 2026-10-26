@@ -5,7 +5,7 @@ Self-service top-up deposits cite the Stripe PaymentIntent that funded them (**E
 the openedx-ledger `SalesContractReferenceProvider` row with slug `stripe_payment_intent` ("Stripe PaymentIntent"),
 plus the PaymentIntent ID (`pi_…`) in `Deposit.sales_contract_reference_id`.
 
-- **Constants:** `STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG` / `_NAME` in `apps/subsidy/constants.py`
+- **Constant:** `STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG` in `apps/subsidy/constants.py`
 - **Created by:** data migration `subsidy.0024_add_stripe_payment_intent_reference_provider` (`get_or_create`, safe
   to re-run)
 
