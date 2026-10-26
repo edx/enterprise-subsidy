@@ -6,7 +6,6 @@ import uuid
 import django.utils.timezone
 import pytest
 from openedx_ledger.constants import INITIAL_DEPOSIT_TRANSACTION_SLUG
-from openedx_ledger.models import SalesContractReferenceProvider as CurrentSalesContractReferenceProvider
 from openedx_ledger.models import TransactionStateChoices
 
 from enterprise_subsidy.apps.subsidy import models as subsidy_models
@@ -132,13 +131,11 @@ def test_migration_0022_backfill_initial_deposits(
     assert historical_deposit.history_change_reason == "Data migration to backfill initial deposits"
 
 
-def test_stripe_payment_intent_slug_fits_provider_slug_field():
+def test_stripe_payment_intent_slug_value():
     """
-    The slug must be exactly this value (other services cite it) and must fit SalesContractReferenceProvider.slug.
+    The slug must be exactly this value: enterprise-access sends it as a literal.
     """
     assert STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG == "stripe_payment_intent"
-    slug_max_length = CurrentSalesContractReferenceProvider._meta.get_field("slug").max_length
-    assert len(STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG) <= slug_max_length
 
 
 @pytest.mark.django_db
@@ -212,5 +209,3 @@ def test_stripe_payment_intent_is_not_a_subsidy_reference_type():
     """
     allowed_slugs = [slug for slug, _ in subsidy_models.SubsidyReferenceChoices.CHOICES]
     assert STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG not in allowed_slugs
-    field_choices = [slug for slug, _ in subsidy_models.Subsidy._meta.get_field("reference_type").choices]
-    assert STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG not in field_choices

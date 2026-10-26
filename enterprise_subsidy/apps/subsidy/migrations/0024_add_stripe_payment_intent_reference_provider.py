@@ -7,11 +7,6 @@ deleting this provider row would also delete every Deposit that cites it.
 """
 from django.db import migrations
 
-from enterprise_subsidy.apps.subsidy.constants import (
-    STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_NAME,
-    STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG
-)
-
 
 def forwards_func(apps, schema_editor):  # pylint: disable=unused-argument
     """
@@ -20,8 +15,8 @@ def forwards_func(apps, schema_editor):  # pylint: disable=unused-argument
     # We get the model from the versioned app registry; if we directly import it, it'll be the wrong version.
     SalesContractReferenceProvider = apps.get_model("openedx_ledger", "SalesContractReferenceProvider")
     SalesContractReferenceProvider.objects.get_or_create(
-        slug=STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG,
-        defaults={"name": STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_NAME},
+        slug="stripe_payment_intent",
+        defaults={"name": "Stripe PaymentIntent"},
     )
 
 
