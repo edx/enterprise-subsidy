@@ -267,6 +267,26 @@ class DepositCreateViewTests(APITestMixin):
         assert 'metadata' in response.data
         assert Deposit.objects.count() == deposit_count_before
 
+    @ddt.data({}, [], "")
+    def test_deposit_creation_treats_empty_metadata_as_none(self, metadata):
+        """
+        Empty metadata of any JSON type is still accepted and stored as no metadata (``null`` is covered by
+        ``test_deposit_creation``).
+        """
+        self.set_up_operator()
+        subsidy = self._create_active_subsidy()
+        url = reverse("api:v2:deposit-admin-create", args=[subsidy.uuid])
+
+        response = self.client.post(url, {
+            "desired_deposit_quantity": 100,
+            "sales_contract_reference_id": str(uuid.uuid4()),
+            "sales_contract_reference_provider": DEFAULT_SALES_CONTRACT_REFERENCE_PROVIDER_SLUG,
+            "metadata": metadata,
+        })
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Deposit.objects.get(uuid=response.data["uuid"]).transaction.metadata == {}
+
     def test_deposit_creation_stores_non_reserved_metadata(self):
         """
         Ordinary metadata keys are stored on the deposit's Transaction and do not leak into ledger columns.

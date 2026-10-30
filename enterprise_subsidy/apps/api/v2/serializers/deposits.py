@@ -1,34 +1,22 @@
 """
 V2 Serializers for the enterprise-subsidy API.
 """
-import inspect
 import logging
 
 import openedx_ledger.api
 from openedx_ledger.models import Deposit, SalesContractReferenceProvider
 from rest_framework import serializers
 
+from enterprise_subsidy.apps.transaction.utils import reserved_metadata_keys
+
 logger = logging.getLogger(__name__)
 
 
-def _named_parameters(func):
-    """
-    Returns the names of ``func``'s parameters that can be passed as keyword arguments (excludes *args/**kwargs).
-    """
-    return {
-        name
-        for name, param in inspect.signature(func).parameters.items()
-        if param.kind in (param.POSITIONAL_OR_KEYWORD, param.KEYWORD_ONLY)
-    }
-
-
 # Deposit metadata is forwarded as ``**metadata`` to ``openedx_ledger.api.create_deposit()``, which in turn forwards it
-# to ``create_transaction()``. Any metadata key matching a named parameter of either function would silently overwrite
-# a ledger column or collide with an explicit argument, so such keys are rejected. Derived from the function
-# signatures so the set stays correct when openedx-ledger is upgraded.
-RESERVED_DEPOSIT_METADATA_KEYS = frozenset(
-    _named_parameters(openedx_ledger.api.create_deposit)
-    | _named_parameters(openedx_ledger.api.create_transaction)
+# to ``create_transaction()``, so keys matching a named parameter of either function are rejected.
+RESERVED_DEPOSIT_METADATA_KEYS = reserved_metadata_keys(
+    openedx_ledger.api.create_deposit,
+    openedx_ledger.api.create_transaction,
 )
 
 
