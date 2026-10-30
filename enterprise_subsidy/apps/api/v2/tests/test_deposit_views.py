@@ -6,7 +6,7 @@ from datetime import timedelta
 
 import ddt
 from django.utils import timezone
-from openedx_ledger.models import Deposit, SalesContractReferenceProvider
+from openedx_ledger.models import Deposit, SalesContractReferenceProvider, Transaction
 from rest_framework import status
 from rest_framework.reverse import reverse
 
@@ -200,6 +200,96 @@ class DepositCreateViewTests(APITestMixin):
             assert response_x2.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         else:
             assert response_x2.status_code == expected_response_status
+
+    def _create_active_subsidy(self):
+        """
+        Helper to create an active, unexpired subsidy (with ledger) in the operator's enterprise.
+        """
+        return SubsidyFactory(
+            enterprise_customer_uuid=STATIC_ENTERPRISE_UUID,
+            active_datetime=timezone.now() - timedelta(days=1),
+            expiration_datetime=timezone.now() + timedelta(days=1),
+        )
+
+    @ddt.data(
+        ('subsidy_access_policy_uuid', '11111111-1111-1111-1111-111111111111'),
+        ('lms_user_id', 12345),
+        ('deposit_uuid', '22222222-2222-2222-2222-222222222222'),
+        ('state', 'committed'),
+        ('quantity', 999),
+    )
+    @ddt.unpack
+    def test_deposit_creation_rejects_reserved_metadata_keys(self, reserved_key, reserved_value):
+        """
+        Metadata keys that clash with ``openedx_ledger.api.create_deposit()`` or ``create_transaction()``
+        parameters are rejected with a 400 naming the key, and no Deposit or Transaction is created.
+        """
+        self.set_up_operator()
+        subsidy = self._create_active_subsidy()
+        url = reverse("api:v2:deposit-admin-create", args=[subsidy.uuid])
+        deposit_count_before = Deposit.objects.count()
+        transaction_count_before = Transaction.objects.count()
+
+        response = self.client.post(url, {
+            "desired_deposit_quantity": 100,
+            "sales_contract_reference_id": str(uuid.uuid4()),
+            "sales_contract_reference_provider": DEFAULT_SALES_CONTRACT_REFERENCE_PROVIDER_SLUG,
+            "metadata": {"source": "learner_credit_top_up", reserved_key: reserved_value},
+        })
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'metadata' in response.data
+        assert reserved_key in str(response.data['metadata'])
+        assert Deposit.objects.count() == deposit_count_before
+        assert Transaction.objects.count() == transaction_count_before
+
+    @ddt.data(
+        ["not", "an", "object"],
+        "not-an-object",
+    )
+    def test_deposit_creation_rejects_non_object_metadata(self, metadata):
+        """
+        Metadata that is not a JSON object is rejected with a 400 instead of failing when unpacked as kwargs.
+        """
+        self.set_up_operator()
+        subsidy = self._create_active_subsidy()
+        url = reverse("api:v2:deposit-admin-create", args=[subsidy.uuid])
+        deposit_count_before = Deposit.objects.count()
+
+        response = self.client.post(url, {
+            "desired_deposit_quantity": 100,
+            "sales_contract_reference_id": str(uuid.uuid4()),
+            "sales_contract_reference_provider": DEFAULT_SALES_CONTRACT_REFERENCE_PROVIDER_SLUG,
+            "metadata": metadata,
+        })
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'metadata' in response.data
+        assert Deposit.objects.count() == deposit_count_before
+
+    def test_deposit_creation_stores_non_reserved_metadata(self):
+        """
+        Ordinary metadata keys are stored on the deposit's Transaction and do not leak into ledger columns.
+        """
+        self.set_up_operator()
+        subsidy = self._create_active_subsidy()
+        url = reverse("api:v2:deposit-admin-create", args=[subsidy.uuid])
+        metadata = {
+            "source": "learner_credit_top_up",
+            "top_up_policy_uuid": str(uuid.uuid4()),
+        }
+
+        response = self.client.post(url, {
+            "desired_deposit_quantity": 100,
+            "sales_contract_reference_id": str(uuid.uuid4()),
+            "sales_contract_reference_provider": DEFAULT_SALES_CONTRACT_REFERENCE_PROVIDER_SLUG,
+            "metadata": metadata,
+        })
+
+        assert response.status_code == status.HTTP_201_CREATED
+        created_transaction = Deposit.objects.get(uuid=response.data["uuid"]).transaction
+        assert created_transaction.metadata == metadata
+        assert created_transaction.subsidy_access_policy_uuid is None
 
     @ddt.data(
         {

@@ -1,6 +1,7 @@
 """
 V2 Serializers for the enterprise-subsidy API.
 """
+import inspect
 import logging
 
 import openedx_ledger.api
@@ -8,6 +9,27 @@ from openedx_ledger.models import Deposit, SalesContractReferenceProvider
 from rest_framework import serializers
 
 logger = logging.getLogger(__name__)
+
+
+def _named_parameters(func):
+    """
+    Returns the names of ``func``'s parameters that can be passed as keyword arguments (excludes *args/**kwargs).
+    """
+    return {
+        name
+        for name, param in inspect.signature(func).parameters.items()
+        if param.kind in (param.POSITIONAL_OR_KEYWORD, param.KEYWORD_ONLY)
+    }
+
+
+# Deposit metadata is forwarded as ``**metadata`` to ``openedx_ledger.api.create_deposit()``, which in turn forwards it
+# to ``create_transaction()``. Any metadata key matching a named parameter of either function would silently overwrite
+# a ledger column or collide with an explicit argument, so such keys are rejected. Derived from the function
+# signatures so the set stays correct when openedx-ledger is upgraded.
+RESERVED_DEPOSIT_METADATA_KEYS = frozenset(
+    _named_parameters(openedx_ledger.api.create_deposit)
+    | _named_parameters(openedx_ledger.api.create_transaction)
+)
 
 
 class DepositSerializer(serializers.ModelSerializer):
@@ -62,7 +84,8 @@ class DepositCreationRequestSerializer(serializers.ModelSerializer):
     metadata = serializers.JSONField(
         help_text=(
             "Any additional metadata that a client may want to associate with the "
-            "related Transaction instance to be created."
+            "related Transaction instance to be created. Must be a JSON object. Keys that clash with ledger "
+            "fields are rejected: " + ", ".join(sorted(RESERVED_DEPOSIT_METADATA_KEYS)) + "."
         ),
         allow_null=True,
         required=False,
@@ -90,6 +113,21 @@ class DepositCreationRequestSerializer(serializers.ModelSerializer):
             'idempotency_key': {'required': False},
             'metadata': {'required': False},
         }
+
+    def validate_metadata(self, value):
+        """
+        Ensures metadata is a JSON object whose keys do not clash with openedx-ledger function parameters.
+        """
+        if not value:
+            return value
+        if not isinstance(value, dict):
+            raise serializers.ValidationError('metadata must be a JSON object.')
+        clashing_keys = sorted(set(value) & RESERVED_DEPOSIT_METADATA_KEYS)
+        if clashing_keys:
+            raise serializers.ValidationError(
+                'metadata contains reserved key(s) that clash with ledger fields: ' + ', '.join(clashing_keys)
+            )
+        return value
 
     def to_representation(self, instance):
         """
