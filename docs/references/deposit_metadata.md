@@ -28,6 +28,18 @@ Non-object metadata (a JSON list or string) also returned 500, because `**metada
 `is_valid()`, so no Deposit or Transaction is created. Empty values (`null`, `{}`, `[]`, `""`) are still treated
 as no metadata.
 
-`RESERVED_DEPOSIT_METADATA_KEYS` is computed with `inspect.signature` from the named (positional-or-keyword and
-keyword-only) parameters of both ledger functions, so it follows openedx-ledger upgrades without manual edits.
-`**metadata` itself is excluded. `test_reserved_keys_track_ledger_api_signatures` guards this.
+`RESERVED_DEPOSIT_METADATA_KEYS` is built by `reserved_metadata_keys()` in
+`enterprise_subsidy/apps/transaction/utils.py`. It uses `inspect.signature` to collect the named (positional-or-keyword
+and keyword-only) parameters of every function the metadata is forwarded through, so it follows openedx-ledger
+upgrades without manual edits. `**metadata` itself is excluded. `ReservedMetadataKeysTestCase` tests the helper, and
+`test_reserved_keys_include_known_ledger_parameters` fails if the deposit set ever comes out empty or partial (e.g. if
+openedx-ledger wraps these functions in a decorator that hides their parameters).
+
+## Same problem on the redemption path (not fixed yet)
+
+`POST /api/v1/transactions/` (`TransactionViewSet.create`) and `POST /api/v2/subsidies/<subsidy_uuid>/admin/transactions/`
+(`TransactionCreationRequestSerializer`) pass client metadata to `Subsidy.redeem()`. It is splatted into
+`Subsidy.create_transaction(**tx_metadata)` and then `openedx_ledger.api.create_transaction(**transaction_metadata)`
+(`enterprise_subsidy/apps/subsidy/models.py`) without any validation. A fix should reuse
+`reserved_metadata_keys(Subsidy.create_transaction, openedx_ledger.api.create_transaction)` rather than copy the logic.
+Passing the unbound `Subsidy.create_transaction` also reserves `self`, which is correct: a `self` key would collide too.
