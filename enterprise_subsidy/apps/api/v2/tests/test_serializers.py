@@ -7,7 +7,11 @@ import ddt
 from django.test import TestCase
 from openedx_ledger.test_utils.factories import DepositFactory, SalesContractReferenceProviderFactory
 
-from enterprise_subsidy.apps.api.v2.serializers.deposits import DepositCreationRequestSerializer, DepositSerializer
+from enterprise_subsidy.apps.api.v2.serializers.deposits import (
+    RESERVED_DEPOSIT_METADATA_KEYS,
+    DepositCreationRequestSerializer,
+    DepositSerializer
+)
 from enterprise_subsidy.apps.subsidy.tests.factories import SubsidyFactory
 
 
@@ -64,3 +68,16 @@ class TestDepositSerializer(TestCase):
             if set_sales_contract_reference_provider
             else None
         )
+
+
+class TestReservedDepositMetadataKeys(TestCase):
+    """
+    Tests for RESERVED_DEPOSIT_METADATA_KEYS.
+    """
+    def test_reserved_keys_include_known_ledger_parameters(self):
+        """
+        Keys known to clash with ledger function parameters are reserved. Fails if the set ever comes out empty or
+        partial, e.g. if openedx-ledger wraps these functions in a decorator that hides their parameters.
+        """
+        assert {'subsidy_access_policy_uuid', 'lms_user_id', 'deposit_uuid', 'state', 'quantity'} <= \
+            RESERVED_DEPOSIT_METADATA_KEYS

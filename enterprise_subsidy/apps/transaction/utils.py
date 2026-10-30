@@ -1,6 +1,7 @@
 """
 Utility functions used in the implementation of subsidy Transactions.
 """
+import inspect
 import logging
 from datetime import datetime, timedelta
 from uuid import UUID
@@ -111,3 +112,20 @@ def unenrollment_can_be_refunded(
             f"{enterprise_course_enrollment.get('enterprise_customer_user')} is not refundable."
         )
         return False
+
+
+def reserved_metadata_keys(*funcs):
+    """
+    Returns the parameter names of ``funcs`` that a ``**metadata`` key would bind to.
+
+    Client-supplied metadata is forwarded to ledger functions such as ``openedx_ledger.api.create_transaction()`` as
+    ``**metadata``. A key matching one of these names doesn't end up in ``Transaction.metadata``: it silently sets a
+    ledger column or collides with an explicit argument, so callers should reject it. Pass every function the metadata
+    is forwarded through. The names come from the signatures, so they stay correct when openedx-ledger is upgraded.
+    """
+    return frozenset(
+        name
+        for func in funcs
+        for name, param in inspect.signature(func).parameters.items()
+        if param.kind in (param.POSITIONAL_OR_KEYWORD, param.KEYWORD_ONLY)
+    )
