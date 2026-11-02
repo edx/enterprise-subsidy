@@ -7,6 +7,20 @@ from django.utils.translation import gettext_lazy as _
 from enterprise_subsidy.apps.core.models import User
 
 
+class ReadOnlyAdminMixin:
+    """
+    Makes a ModelAdmin or inline read-only: no add, change or delete. Django then renders every field read-only.
+    """
+    def has_add_permission(self, request, obj=None):  # pylint: disable=unused-argument
+        return False
+
+    def has_change_permission(self, request, obj=None):  # pylint: disable=unused-argument
+        return False
+
+    def has_delete_permission(self, request, obj=None):  # pylint: disable=unused-argument
+        return False
+
+
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     """ Admin configuration for the custom User model. """
