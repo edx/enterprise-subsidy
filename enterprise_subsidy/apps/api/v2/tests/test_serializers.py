@@ -76,8 +76,24 @@ class TestReservedDepositMetadataKeys(TestCase):
     """
     def test_reserved_keys_include_known_ledger_parameters(self):
         """
-        Keys known to clash with ledger function parameters are reserved. Fails if the set ever comes out empty or
-        partial, e.g. if openedx-ledger wraps these functions in a decorator that hides their parameters.
+        Every named parameter of ``create_deposit()`` and ``create_transaction()`` is reserved. Fails if the set ever
+        comes out empty or partial, e.g. if openedx-ledger wraps these functions in a decorator that hides their
+        parameters. This is a floor, so new ledger parameters don't break it.
         """
-        assert {'subsidy_access_policy_uuid', 'lms_user_id', 'deposit_uuid', 'state', 'quantity'} <= \
-            RESERVED_DEPOSIT_METADATA_KEYS
+        expected_minimum_reserved_keys = {
+            'content_key',
+            'content_title',
+            'course_run_start_date',
+            'deposit_uuid',
+            'idempotency_key',
+            'ledger',
+            'lms_user_email',
+            'lms_user_id',
+            'parent_content_key',
+            'quantity',
+            'sales_contract_reference_id',
+            'sales_contract_reference_provider',
+            'state',
+            'subsidy_access_policy_uuid',
+        }
+        assert RESERVED_DEPOSIT_METADATA_KEYS >= expected_minimum_reserved_keys

@@ -23,16 +23,19 @@ Non-object metadata (a JSON list or string) also returned 500, because `**metada
 
 ## Behaviour (ENT-12395)
 
-`validate_metadata` returns **400** if a non-empty `metadata` is not a JSON object, or if any key is in
-`RESERVED_DEPOSIT_METADATA_KEYS`. The error message names each clashing key. Validation runs inside
-`is_valid()`, so no Deposit or Transaction is created. Empty values (`null`, `{}`, `[]`, `""`) are still treated
-as no metadata.
+`metadata` is a `DictField(allow_null=True)`, so anything that is not a JSON object (a list, string, number or
+boolean, including empty or falsy ones like `[]`, `""`, `0` and `false`) is rejected with **400** (`not_a_dict`).
+Before this change the empty/falsy ones were silently treated as no metadata and returned 201. `validate_metadata`
+then returns **400** if any key is in `RESERVED_DEPOSIT_METADATA_KEYS`, naming each clashing key. Validation runs
+inside `is_valid()`, so no Deposit or Transaction is created. `null` and `{}` are accepted and stored as no metadata.
 
 `RESERVED_DEPOSIT_METADATA_KEYS` is built by `reserved_metadata_keys()` in
 `enterprise_subsidy/apps/transaction/utils.py`. It uses `inspect.signature` to collect the named (positional-or-keyword
 and keyword-only) parameters of every function the metadata is forwarded through, so it follows openedx-ledger
 upgrades without manual edits. `**metadata` itself is excluded. `ReservedMetadataKeysTestCase` tests the helper, and
-`test_reserved_keys_include_known_ledger_parameters` fails if the deposit set ever comes out empty or partial (e.g. if
+`test_reserved_keys_include_known_ledger_parameters` checks that the deposit set contains all 14 current
+`create_deposit()`/`create_transaction()` parameter names (a `>=` floor, so new ledger parameters don't break it).
+It fails if the set ever comes out empty or partial (e.g. if
 openedx-ledger wraps these functions in a decorator that hides their parameters).
 
 ## Same problem on the redemption path (not fixed yet)

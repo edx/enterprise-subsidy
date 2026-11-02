@@ -246,10 +246,15 @@ class DepositCreateViewTests(APITestMixin):
     @ddt.data(
         ["not", "an", "object"],
         "not-an-object",
+        [],
+        "",
+        0,
+        False,
     )
     def test_deposit_creation_rejects_non_object_metadata(self, metadata):
         """
-        Metadata that is not a JSON object is rejected with a 400 instead of failing when unpacked as kwargs.
+        Metadata that is not a JSON object is rejected with a 400 instead of failing when unpacked as kwargs, even when
+        it is empty or falsy.
         """
         self.set_up_operator()
         subsidy = self._create_active_subsidy()
@@ -267,10 +272,9 @@ class DepositCreateViewTests(APITestMixin):
         assert 'metadata' in response.data
         assert Deposit.objects.count() == deposit_count_before
 
-    @ddt.data({}, [], "")
-    def test_deposit_creation_treats_empty_metadata_as_none(self, metadata):
+    def test_deposit_creation_treats_empty_metadata_as_none(self):
         """
-        Empty metadata of any JSON type is still accepted and stored as no metadata (``null`` is covered by
+        An empty metadata object is accepted and stored as no metadata (``null`` is covered by
         ``test_deposit_creation``).
         """
         self.set_up_operator()
@@ -281,7 +285,7 @@ class DepositCreateViewTests(APITestMixin):
             "desired_deposit_quantity": 100,
             "sales_contract_reference_id": str(uuid.uuid4()),
             "sales_contract_reference_provider": DEFAULT_SALES_CONTRACT_REFERENCE_PROVIDER_SLUG,
-            "metadata": metadata,
+            "metadata": {},
         })
 
         assert response.status_code == status.HTTP_201_CREATED

@@ -69,7 +69,7 @@ class DepositCreationRequestSerializer(serializers.ModelSerializer):
         ),
         required=False,
     )
-    metadata = serializers.JSONField(
+    metadata = serializers.DictField(
         help_text=(
             "Any additional metadata that a client may want to associate with the "
             "related Transaction instance to be created. Must be a JSON object. Keys that clash with ledger "
@@ -104,12 +104,11 @@ class DepositCreationRequestSerializer(serializers.ModelSerializer):
 
     def validate_metadata(self, value):
         """
-        Ensures metadata is a JSON object whose keys do not clash with openedx-ledger function parameters.
+        Ensures metadata keys do not clash with openedx-ledger function parameters. ``DictField`` has already rejected
+        anything that is not a JSON object.
         """
         if not value:
             return value
-        if not isinstance(value, dict):
-            raise serializers.ValidationError('metadata must be a JSON object.')
         clashing_keys = sorted(set(value) & RESERVED_DEPOSIT_METADATA_KEYS)
         if clashing_keys:
             raise serializers.ValidationError(
