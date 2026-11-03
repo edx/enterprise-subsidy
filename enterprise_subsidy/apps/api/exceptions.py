@@ -18,6 +18,7 @@ class ErrorCodes:
     INACTIVE_SUBSIDY_CREATION_ERROR = 'inactive_subsidy_creation_error'
     FULFILLMENT_ERROR = 'fulfillment_error'
     DEPOSIT_ON_EXPIRED_SUBSIDY_ERROR = 'deposit_on_expired_subsidy'
+    DEPOSIT_IDEMPOTENCY_CONFLICT = 'deposit_idempotency_conflict'
 
 
 class SubsidyAPIException(APIException):
