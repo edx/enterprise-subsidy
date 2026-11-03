@@ -69,7 +69,9 @@ class DepositCreationRequestSerializer(serializers.ModelSerializer):
         ),
         required=False,
     )
-    metadata = serializers.DictField(
+    # Not a DictField: on form/multipart input that only reads ``metadata.<key>`` fields and turns a plain
+    # ``metadata=<json string>`` into ``{}``, whereas JSONField parses it.
+    metadata = serializers.JSONField(
         help_text=(
             "Any additional metadata that a client may want to associate with the "
             "related Transaction instance to be created. Must be a JSON object. Keys that clash with ledger "
@@ -104,11 +106,14 @@ class DepositCreationRequestSerializer(serializers.ModelSerializer):
 
     def validate_metadata(self, value):
         """
-        Ensures metadata keys do not clash with openedx-ledger function parameters. ``DictField`` has already rejected
-        anything that is not a JSON object.
+        Ensures metadata is a JSON object whose keys do not clash with openedx-ledger function parameters.
         """
-        if not value:
+        if value is None:
             return value
+        if not isinstance(value, dict):
+            raise serializers.ValidationError(
+                f'Expected a JSON object but got type "{type(value).__name__}".', code='not_a_dict'
+            )
         clashing_keys = sorted(set(value) & RESERVED_DEPOSIT_METADATA_KEYS)
         if clashing_keys:
             raise serializers.ValidationError(

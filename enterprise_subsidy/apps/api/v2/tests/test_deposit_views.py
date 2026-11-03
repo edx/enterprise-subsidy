@@ -109,6 +109,19 @@ class DepositCreateViewTests(APITestMixin):
         },
         {
             "subsidy_active": True,
+            # Form clients send metadata as a JSON string, which must be parsed rather than dropped.
+            "creation_request_data": {
+                "desired_deposit_quantity": 100,
+                "sales_contract_reference_id": str(uuid.uuid4()),
+                "sales_contract_reference_provider": DEFAULT_SALES_CONTRACT_REFERENCE_PROVIDER_SLUG,
+                "metadata": '{"foo": "bar"}',
+            },
+            "request_format": "multipart",
+            "expected_metadata": {"foo": "bar"},
+            "expected_response_status": status.HTTP_201_CREATED,
+        },
+        {
+            "subsidy_active": True,
             # Top-up deposit citing the Stripe PaymentIntent which funded it (provider seeded by migration 0024).
             "creation_request_data": {
                 "desired_deposit_quantity": 100,
@@ -186,6 +199,8 @@ class DepositCreateViewTests(APITestMixin):
         creation_request_data,
         expected_response_status,
         subsidy_expired=False,
+        request_format="json",
+        expected_metadata=None,
     ):
         """
         Test that the DepositCreationRequestSerializer correctly creates a deposit idempotently OR fails with the
@@ -196,7 +211,7 @@ class DepositCreateViewTests(APITestMixin):
 
         url = reverse("api:v2:deposit-admin-create", args=[subsidy.uuid])
 
-        response = self.client.post(url, creation_request_data)
+        response = self.client.post(url, creation_request_data, format=request_format)
         assert response.status_code == expected_response_status
         if response.status_code < 300:
             assert response.data["ledger"] == subsidy.ledger.uuid
@@ -206,7 +221,9 @@ class DepositCreateViewTests(APITestMixin):
                 creation_request_data["sales_contract_reference_provider"]
             assert Deposit.objects.count() == 2
             created_deposit = Deposit.objects.get(uuid=response.data["uuid"])
-            assert created_deposit.transaction.metadata == (creation_request_data.get("metadata") or {})
+            assert created_deposit.transaction.metadata == (
+                expected_metadata or creation_request_data.get("metadata") or {}
+            )
             # Metadata must not leak into any ledger column a metadata key could have been unpacked into.
             for column in ("subsidy_access_policy_uuid", "lms_user_id", "lms_user_email", "content_key"):
                 assert getattr(created_deposit.transaction, column) is None
@@ -215,7 +232,7 @@ class DepositCreateViewTests(APITestMixin):
         else:
             assert Deposit.objects.count() == 1
 
-        response_x2 = self.client.post(url, creation_request_data)
+        response_x2 = self.client.post(url, creation_request_data, format=request_format)
         if expected_response_status == status.HTTP_201_CREATED:
             assert response_x2.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         else:
@@ -237,9 +254,14 @@ class DepositCreateViewTests(APITestMixin):
         ("", "not_a_dict", None),
         (0, "not_a_dict", None),
         (False, "not_a_dict", None),
+        # Form clients send metadata as a JSON string; it is parsed and validated the same way.
+        ('{"source": "learner_credit_top_up", "state": "committed"}', "invalid", "state", "multipart"),
+        ('[1, 2]', "not_a_dict", None, "multipart"),
     )
     @ddt.unpack
-    def test_deposit_creation_rejects_invalid_metadata(self, metadata, expected_error_code, expected_reserved_keys):
+    def test_deposit_creation_rejects_invalid_metadata(
+        self, metadata, expected_error_code, expected_reserved_keys, request_format="json",
+    ):
         """
         Metadata that is not a JSON object, or whose keys clash with ledger function parameters, is rejected with a 400
         instead of failing when unpacked as kwargs, and no Deposit or Transaction is created.
@@ -255,7 +277,7 @@ class DepositCreateViewTests(APITestMixin):
             "sales_contract_reference_id": str(uuid.uuid4()),
             "sales_contract_reference_provider": DEFAULT_SALES_CONTRACT_REFERENCE_PROVIDER_SLUG,
             "metadata": metadata,
-        })
+        }, format=request_format)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         [error] = response.data["metadata"]

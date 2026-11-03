@@ -23,11 +23,16 @@ Non-object metadata (a JSON list or string) also returned 500, because `**metada
 
 ## Behaviour (ENT-12395)
 
-`metadata` is a `DictField(allow_null=True)`, so anything that is not a JSON object (a list, string, number or
-boolean, including empty or falsy ones like `[]`, `""`, `0` and `false`) is rejected with **400** (`not_a_dict`).
-Before this change the empty/falsy ones were silently treated as no metadata and returned 201. `validate_metadata`
-then returns **400** if any key is in `RESERVED_DEPOSIT_METADATA_KEYS`, naming each clashing key. Validation runs
-inside `is_valid()`, so no Deposit or Transaction is created. `null` and `{}` are accepted and stored as no metadata.
+`metadata` is a `JSONField(allow_null=True)`. `validate_metadata` rejects anything that is not a JSON object (a list,
+string, number or boolean, including empty or falsy ones like `[]`, `""`, `0` and `false`) with **400**
+(`not_a_dict`). Before this change the empty/falsy ones were silently treated as no metadata and returned 201. It then
+returns **400** if any key is in `RESERVED_DEPOSIT_METADATA_KEYS`, naming each clashing key. Validation runs inside
+`is_valid()`, so no Deposit or Transaction is created. `null` and `{}` are accepted and stored as no metadata.
+
+Gotcha: don't switch `metadata` to `DictField`. The view accepts DRF's default parsers, so form and multipart posts
+also work (e.g. from the browsable API), and they send `metadata` as a JSON string. `JSONField` parses that string,
+but `DictField` only reads dotted `metadata.<key>` form fields and turns a plain `metadata=<string>` into `{}`. The
+metadata is then silently dropped, and neither the object check nor the reserved-key check runs on it.
 
 `RESERVED_DEPOSIT_METADATA_KEYS` is built by `reserved_metadata_keys()` in
 `enterprise_subsidy/apps/transaction/utils.py`. It uses `inspect.signature` to collect the named (positional-or-keyword
