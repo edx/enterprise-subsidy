@@ -464,3 +464,16 @@ class KeyedDepositCreateViewTests(APITestMixin):
         response = self.client.post(self.url, [], format='json')
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_replay_with_falsy_key_returns_original_deposit(self):
+        """
+        A key that the serializer accepts but is falsy as sent (JSON 0, normalized to '0') is still treated as keyed.
+        """
+        request_data = {**self.request_data, 'idempotency_key': 0}
+        first_response = self.client.post(self.url, request_data, format='json')
+        assert first_response.status_code == status.HTTP_201_CREATED
+
+        replay_response = self.client.post(self.url, request_data, format='json')
+
+        assert replay_response.status_code == status.HTTP_200_OK
+        assert replay_response.data == first_response.data

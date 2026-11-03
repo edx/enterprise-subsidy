@@ -98,7 +98,7 @@ class DepositAdminCreate(generics.CreateAPIView):
         """
         # Leave non-dict bodies (e.g. a JSON array) to the serializer, which rejects them with a 400.
         idempotency_key = request.data.get('idempotency_key') if isinstance(request.data, dict) else None
-        if idempotency_key:
+        if idempotency_key is not None:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             # Must run before the expired-subsidy check, so that a replay still succeeds after the subsidy expires.
@@ -117,7 +117,7 @@ class DepositAdminCreate(generics.CreateAPIView):
                 response.status_code = status.HTTP_200_OK
             return response  # The default create() response status is HTTP_201_CREATED
         except (HTTPError, DepositCreationError) as exc:
-            if idempotency_key:
+            if idempotency_key is not None:
                 if _is_ledger_lock_error(exc):
                     raise SubsidyAPIException(
                         detail='Attempt to lock the Ledger failed, please try again.',
