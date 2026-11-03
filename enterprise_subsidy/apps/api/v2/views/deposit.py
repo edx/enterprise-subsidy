@@ -96,7 +96,8 @@ class DepositAdminCreate(generics.CreateAPIView):
         A create view that is accessible only to operators of the system.
         It creates a new Deposit record.
         """
-        idempotency_key = request.data.get('idempotency_key')
+        # Leave non-dict bodies (e.g. a JSON array) to the serializer, which rejects them with a 400.
+        idempotency_key = request.data.get('idempotency_key') if isinstance(request.data, dict) else None
         if idempotency_key:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)

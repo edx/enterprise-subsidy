@@ -8,6 +8,7 @@ from unittest import mock
 
 import ddt
 from django.utils import timezone
+from openedx_ledger import api as ledger_api
 from openedx_ledger.models import Deposit, SalesContractReferenceProvider, Transaction, TransactionStateChoices
 from rest_framework import status
 from rest_framework.reverse import reverse
@@ -443,3 +444,23 @@ class KeyedDepositCreateViewTests(APITestMixin):
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         assert response.data['code'] == ErrorCodes.DEPOSIT_CREATION_ERROR
+
+    def test_keyed_creation_failure_without_existing_deposit_is_rejected(self):
+        """
+        A keyed request that fails for a reason other than a race or the ledger lock still returns 422.
+        """
+        with mock.patch.object(
+            ledger_api, 'create_deposit', side_effect=ledger_api.DepositCreationError('boom'),
+        ):
+            response = self.client.post(self.url, self.request_data)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.data['code'] == ErrorCodes.DEPOSIT_CREATION_ERROR
+
+    def test_non_dict_body_is_rejected(self):
+        """
+        A JSON array body is rejected by the serializer with a 400, not a 500.
+        """
+        response = self.client.post(self.url, [], format='json')
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
