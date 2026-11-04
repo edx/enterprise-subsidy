@@ -8,7 +8,7 @@ anyio==4.15.1
     # via
     #   -r requirements/base.txt
     #   httpx2
-asgiref==3.12.1
+asgiref==3.13.0
     # via
     #   -r requirements/base.txt
     #   django
@@ -35,12 +35,12 @@ avro==1.12.2
     #   confluent-kafka
 backoff==2.2.1
     # via -r requirements/base.txt
-cachetools==7.2.4
+cachetools==7.2.7
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
     #   tox
-certifi==2026.10.19
+certifi==2026.10.23
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
@@ -71,7 +71,7 @@ code-annotations==3.0.0
     #   edx-toggles
 colorama==0.4.6
     # via tox
-confluent-kafka[avro,schema-registry]==2.16.0
+confluent-kafka[avro,schema-registry]==2.16.1
     # via -r requirements/base.txt
 coverage[toml]==7.17.0
     # via
@@ -175,7 +175,7 @@ djangorestframework==3.18.3
     #   drf-spectacular
     #   drf-yasg
     #   edx-drf-extensions
-dnspython==2.9.0
+dnspython==2.9.1
     # via
     #   -r requirements/base.txt
     #   pymongo
@@ -208,7 +208,7 @@ edx-django-utils==8.1.0
     #   getsmarter-api-clients
     #   openedx-events
     #   openedx-ledger
-edx-drf-extensions==10.9.0
+edx-drf-extensions==10.10.0
     # via
     #   -r requirements/base.txt
     #   edx-rbac
@@ -235,7 +235,7 @@ edx-toggles==6.0.0
     #   edx-event-bus-kafka
 factory-boy==3.3.3
     # via -r requirements/test.in
-faker==40.43.0
+faker==40.44.0
     # via factory-boy
 fastavro==1.13.1
     # via
@@ -338,7 +338,7 @@ packaging==26.3
     #   pytest
     #   tox
     #   virtualenv
-platformdirs==4.13.5
+platformdirs==4.14.0
     # via
     #   pylint
     #   tox
@@ -394,9 +394,9 @@ pynacl==1.6.2
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
-pyproject-api==1.12.0
+pyproject-api==1.12.2
     # via tox
-pytest==9.1.1
+pytest==9.2.0
     # via
     #   pytest-cov
     #   pytest-django
@@ -406,7 +406,7 @@ pytest-django==4.14.0
     # via -r requirements/test.in
 python-dateutil==3.0.0
     # via -r requirements/base.txt
-python-discovery==1.6.4
+python-discovery==1.6.7
     # via
     #   tox
     #   virtualenv
@@ -418,7 +418,7 @@ python3-openid==3.2.0
     # via
     #   -r requirements/base.txt
     #   social-auth-core
-pytz==2026.5
+pytz==2026.6
     # via
     #   -r requirements/base.txt
     #   drf-yasg
@@ -517,7 +517,7 @@ tomlkit==0.15.2
     # via
     #   edx-lint
     #   pylint
-tox==4.67.1
+tox==4.67.4
     # via -r requirements/test.in
 truststore==0.10.5
     # via
@@ -533,7 +533,7 @@ typing-extensions==4.16.0
     #   referencing
     #   swagger-spec-validator
     #   tox
-tzdata==2026.5
+tzdata==2026.6
     # via
     #   -r requirements/base.txt
     #   python-dateutil
@@ -547,7 +547,7 @@ urllib3==2.8.0
     #   -r requirements/base.txt
     #   requests
     #   responses
-virtualenv==21.14.13
+virtualenv==21.15.1
     # via tox
 
 # The following packages are considered to be unsafe in a requirements file:
