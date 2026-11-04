@@ -477,3 +477,23 @@ class KeyedDepositCreateViewTests(APITestMixin):
 
         assert replay_response.status_code == status.HTTP_200_OK
         assert replay_response.data == first_response.data
+
+    def test_key_used_by_non_deposit_transaction_is_conflict(self):
+        """
+        A key already used by a non-deposit Transaction (e.g. a redemption) returns 409, instead of attaching the new
+        Deposit to that Transaction without crediting the ledger.
+        """
+        Transaction.objects.create(
+            ledger=self.subsidy.ledger,
+            idempotency_key=self.IDEMPOTENCY_KEY,
+            quantity=-500,
+            state=TransactionStateChoices.COMMITTED,
+        )
+        starting_balance = self.subsidy.ledger.balance()
+
+        response = self.client.post(self.url, self.request_data)
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.data['code'] == ErrorCodes.DEPOSIT_IDEMPOTENCY_CONFLICT
+        assert not self._keyed_deposits().exists()
+        assert self.subsidy.ledger.balance() == starting_balance

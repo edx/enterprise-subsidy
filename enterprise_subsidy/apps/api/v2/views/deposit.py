@@ -8,7 +8,7 @@ from django.utils.functional import cached_property
 from drf_spectacular.utils import extend_schema
 from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
-from openedx_ledger.models import Deposit, LedgerLockAttemptFailed
+from openedx_ledger.models import Deposit, LedgerLockAttemptFailed, Transaction
 from requests.exceptions import HTTPError
 from rest_framework import generics, permissions, status
 from rest_framework.authentication import SessionAuthentication
@@ -140,6 +140,20 @@ class DepositAdminCreate(generics.CreateAPIView):
             transaction__idempotency_key=validated_data['idempotency_key'],
         ).first()
         if not existing_deposit:
+            # openedx-ledger would reuse a non-deposit Transaction with this key (e.g. a redemption) and attach the new
+            # Deposit to it without crediting the ledger.
+            if Transaction.objects.filter(
+                ledger=self.subsidy.ledger,
+                idempotency_key=validated_data['idempotency_key'],
+            ).exists():
+                raise DepositCreationAPIException(
+                    detail=(
+                        f'idempotency_key {validated_data["idempotency_key"]} is already used by a non-deposit '
+                        'transaction in this subsidy.'
+                    ),
+                    code=ErrorCodes.DEPOSIT_IDEMPOTENCY_CONFLICT,
+                    status_code=status.HTTP_409_CONFLICT,
+                )
             return None
         if (
             existing_deposit.desired_deposit_quantity != validated_data['desired_deposit_quantity']

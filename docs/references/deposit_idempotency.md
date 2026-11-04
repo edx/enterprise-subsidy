@@ -9,6 +9,7 @@
 | Repeat with same quantity, reference ID and provider                | 200, the original deposit             |
 | Repeat after the subsidy has expired                                | 200, the original deposit             |
 | Same key, different quantity, reference ID or provider              | 409 `deposit_idempotency_conflict`    |
+| Key already used by a non-deposit transaction (e.g. a redemption)   | 409 `deposit_idempotency_conflict`    |
 | Ledger lock held by another request                                 | 429 `ledger_lock_error` (retryable)   |
 | Loser of a same-key race (insert fails on a unique constraint)      | 200, the winner's deposit             |
 
