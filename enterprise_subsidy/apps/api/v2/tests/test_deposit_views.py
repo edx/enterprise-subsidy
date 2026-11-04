@@ -239,28 +239,86 @@ class DepositCreateViewTests(APITestMixin):
             assert response_x2.status_code == expected_response_status
 
     @ddt.data(
+        ###
         # Keys that clash with openedx_ledger.api.create_deposit() or create_transaction() parameters.
-        ({"source": "learner_credit_top_up", "subsidy_access_policy_uuid": "11111111-1111-1111-1111-111111111111"},
-         "invalid", "subsidy_access_policy_uuid"),
-        ({"source": "learner_credit_top_up", "lms_user_id": 12345}, "invalid", "lms_user_id"),
-        ({"source": "learner_credit_top_up", "deposit_uuid": "22222222-2222-2222-2222-222222222222"},
-         "invalid", "deposit_uuid"),
-        ({"source": "learner_credit_top_up", "state": "committed"}, "invalid", "state"),
-        ({"source": "learner_credit_top_up", "quantity": 999}, "invalid", "quantity"),
+        ###
+        {
+            "metadata": {
+                "source": "learner_credit_top_up",
+                "subsidy_access_policy_uuid": "11111111-1111-1111-1111-111111111111",
+            },
+            "expected_error_code": "invalid",
+            "expected_reserved_keys": "subsidy_access_policy_uuid",
+        },
+        {
+            "metadata": {"source": "learner_credit_top_up", "lms_user_id": 12345},
+            "expected_error_code": "invalid",
+            "expected_reserved_keys": "lms_user_id",
+        },
+        {
+            "metadata": {"source": "learner_credit_top_up", "deposit_uuid": "22222222-2222-2222-2222-222222222222"},
+            "expected_error_code": "invalid",
+            "expected_reserved_keys": "deposit_uuid",
+        },
+        {
+            "metadata": {"source": "learner_credit_top_up", "state": "committed"},
+            "expected_error_code": "invalid",
+            "expected_reserved_keys": "state",
+        },
+        {
+            "metadata": {"source": "learner_credit_top_up", "quantity": 999},
+            "expected_error_code": "invalid",
+            "expected_reserved_keys": "quantity",
+        },
+        ###
         # Metadata that is not a JSON object, even when it is empty or falsy.
-        (["not", "an", "object"], "not_a_dict", None),
-        ("not-an-object", "not_a_dict", None),
-        ([], "not_a_dict", None),
-        ("", "not_a_dict", None),
-        (0, "not_a_dict", None),
-        (False, "not_a_dict", None),
+        ###
+        {
+            "metadata": ["not", "an", "object"],
+            "expected_error_code": "not_a_dict",
+        },
+        {
+            "metadata": "not-an-object",
+            "expected_error_code": "not_a_dict",
+        },
+        {
+            "metadata": [],
+            "expected_error_code": "not_a_dict",
+        },
+        {
+            "metadata": "",
+            "expected_error_code": "not_a_dict",
+        },
+        {
+            "metadata": 0,
+            "expected_error_code": "not_a_dict",
+        },
+        {
+            "metadata": False,
+            "expected_error_code": "not_a_dict",
+        },
+        ###
         # Form clients send metadata as a JSON string; it is parsed and validated the same way.
-        ('{"source": "learner_credit_top_up", "state": "committed"}', "invalid", "state", "multipart"),
-        ('[1, 2]', "not_a_dict", None, "multipart"),
+        ###
+        {
+            "metadata": '{"source": "learner_credit_top_up", "state": "committed"}',
+            "request_format": "multipart",
+            "expected_error_code": "invalid",
+            "expected_reserved_keys": "state",
+        },
+        {
+            "metadata": '[1, 2]',
+            "request_format": "multipart",
+            "expected_error_code": "not_a_dict",
+        },
     )
     @ddt.unpack
     def test_deposit_creation_rejects_invalid_metadata(
-        self, metadata, expected_error_code, expected_reserved_keys, request_format="json",
+        self,
+        metadata,
+        expected_error_code,
+        expected_reserved_keys=None,
+        request_format="json",
     ):
         """
         Metadata that is not a JSON object, or whose keys clash with ledger function parameters, is rejected with a 400
