@@ -4,7 +4,11 @@
 #
 #    make upgrade
 #
-anyio==4.15.1
+amqp==5.4.2
+    # via
+    #   -r requirements/base.txt
+    #   kombu
+anyio==4.16.0
     # via
     #   -r requirements/base.txt
     #   httpx2
@@ -25,7 +29,7 @@ attrs==26.1.0
     #   jsonschema
     #   openedx-events
     #   referencing
-authlib==1.9.1
+authlib==1.9.3
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
@@ -35,11 +39,19 @@ avro==1.12.2
     #   confluent-kafka
 backoff==2.2.1
     # via -r requirements/base.txt
-cachetools==7.2.7
+billiard==4.3.2
+    # via
+    #   -r requirements/base.txt
+    #   celery
+cachetools==7.2.8
     # via
     #   -r requirements/base.txt
     #   confluent-kafka
     #   tox
+celery==5.6.3
+    # via
+    #   -r requirements/base.txt
+    #   openedx-events
 certifi==2026.10.23
     # via
     #   -r requirements/base.txt
@@ -57,12 +69,28 @@ charset-normalizer==3.5.2
 click==8.5.0
     # via
     #   -r requirements/base.txt
+    #   celery
+    #   click-didyoumean
     #   click-log
+    #   click-plugins
+    #   click-repl
     #   code-annotations
     #   edx-django-utils
     #   edx-lint
+click-didyoumean==0.3.1
+    # via
+    #   -r requirements/base.txt
+    #   celery
 click-log==0.4.0
     # via edx-lint
+click-plugins==1.1.1.2
+    # via
+    #   -r requirements/base.txt
+    #   celery
+click-repl==0.4.1
+    # via
+    #   -r requirements/base.txt
+    #   celery
 code-annotations==3.0.0
     # via
     #   -r requirements/base.txt
@@ -73,7 +101,7 @@ colorama==0.4.6
     # via tox
 confluent-kafka[avro,schema-registry]==2.16.1
     # via -r requirements/base.txt
-coverage[toml]==7.17.0
+coverage[toml]==7.17.1
     # via
     #   -r requirements/test.in
     #   pytest-cov
@@ -175,7 +203,7 @@ djangorestframework==3.18.3
     #   drf-spectacular
     #   drf-yasg
     #   edx-drf-extensions
-dnspython==2.9.1
+dnspython==2.9.2
     # via
     #   -r requirements/base.txt
     #   pymongo
@@ -242,7 +270,7 @@ fastavro==1.13.1
     #   -r requirements/base.txt
     #   confluent-kafka
     #   openedx-events
-filelock==4.2.4
+filelock==4.2.7
     # via
     #   python-discovery
     #   tox
@@ -284,7 +312,7 @@ jinja2==3.1.6
     # via
     #   -r requirements/base.txt
     #   code-annotations
-joserfc==1.7.7
+joserfc==1.8.0
     # via
     #   -r requirements/base.txt
     #   authlib
@@ -301,6 +329,10 @@ jsonschema-specifications==2025.9.1
     # via
     #   -r requirements/base.txt
     #   jsonschema
+kombu==5.7.0
+    # via
+    #   -r requirements/base.txt
+    #   celery
 markupsafe==3.0.4
     # via
     #   -r requirements/base.txt
@@ -309,13 +341,13 @@ mccabe==0.7.0
     # via pylint
 mock==5.2.0
     # via -r requirements/test.in
-mypy-extensions==1.1.0
+mypy-extensions==1.2.0
     # via isort
 mysqlclient==2.3.0
     # via
     #   -r requirements/base.txt
     #   openedx-ledger
-oauthlib==4.0.0
+oauthlib==4.0.1
     # via
     #   -r requirements/base.txt
     #   getsmarter-api-clients
@@ -323,7 +355,7 @@ oauthlib==4.0.0
     #   social-auth-core
 openedx-atlas==0.7.2
     # via -r requirements/base.txt
-openedx-events==11.2.0
+openedx-events==11.3.0
     # via
     #   -r requirements/base.txt
     #   edx-event-bus-kafka
@@ -338,7 +370,7 @@ packaging==26.3
     #   pytest
     #   tox
     #   virtualenv
-platformdirs==4.14.0
+platformdirs==4.14.3
     # via
     #   pylint
     #   tox
@@ -352,6 +384,10 @@ ply==3.11
     # via
     #   -r requirements/base.txt
     #   djangoql
+prompt-toolkit==3.0.53
+    # via
+    #   -r requirements/base.txt
+    #   click-repl
 psutil==7.2.2
     # via
     #   -r requirements/base.txt
@@ -394,7 +430,7 @@ pynacl==1.6.2
     # via
     #   -r requirements/base.txt
     #   edx-django-utils
-pyproject-api==1.12.2
+pyproject-api==1.12.3
     # via tox
 pytest==9.2.0
     # via
@@ -404,9 +440,11 @@ pytest-cov==7.1.0
     # via -r requirements/test.in
 pytest-django==4.14.0
     # via -r requirements/test.in
-python-dateutil==3.0.0
-    # via -r requirements/base.txt
-python-discovery==1.6.7
+python-dateutil==4.0.0
+    # via
+    #   -r requirements/base.txt
+    #   celery
+python-discovery==1.9.2
     # via
     #   tox
     #   virtualenv
@@ -479,7 +517,6 @@ six==1.17.0
     #   edx-django-release-util
     #   edx-lint
     #   edx-rbac
-    #   python-dateutil
 social-auth-app-django==5.9.0
     # via
     #   -c requirements/common_constraints.txt
@@ -493,7 +530,7 @@ social-auth-core==4.9.1
     #   -r requirements/base.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sqlparse==0.6.0
+sqlparse==0.6.1
     # via
     #   -r requirements/base.txt
     #   django
@@ -517,7 +554,7 @@ tomlkit==0.15.2
     # via
     #   edx-lint
     #   pylint
-tox==4.67.4
+tox==4.67.8
     # via -r requirements/test.in
 truststore==0.10.5
     # via
@@ -528,6 +565,7 @@ typing-extensions==4.16.0
     # via
     #   -r requirements/base.txt
     #   anyio
+    #   click-repl
     #   edx-opaque-keys
     #   httpx2
     #   referencing
@@ -537,6 +575,10 @@ tzdata==2026.6
     # via
     #   -r requirements/base.txt
     #   python-dateutil
+tzlocal==5.4.5
+    # via
+    #   -r requirements/base.txt
+    #   celery
 uritemplate==4.2.0
     # via
     #   -r requirements/base.txt
@@ -547,8 +589,18 @@ urllib3==2.8.0
     #   -r requirements/base.txt
     #   requests
     #   responses
-virtualenv==21.15.1
+vine==5.1.0
+    # via
+    #   -r requirements/base.txt
+    #   amqp
+    #   celery
+    #   kombu
+virtualenv==21.15.4
     # via tox
+wcwidth==0.9.4
+    # via
+    #   -r requirements/base.txt
+    #   prompt-toolkit
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

@@ -4,7 +4,12 @@
 #
 #    make upgrade
 #
-anyio==4.15.1
+amqp==5.4.2
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   kombu
+anyio==4.16.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -30,7 +35,7 @@ attrs==26.1.0
     #   jsonschema
     #   openedx-events
     #   referencing
-authlib==1.9.1
+authlib==1.9.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -44,12 +49,22 @@ backoff==2.2.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-cachetools==7.2.7
+billiard==4.3.2
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   celery
+cachetools==7.2.8
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   confluent-kafka
     #   tox
+celery==5.6.3
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   openedx-events
 certifi==2026.10.23
     # via
     #   -r requirements/quality.txt
@@ -71,15 +86,34 @@ click==8.5.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
+    #   celery
+    #   click-didyoumean
     #   click-log
+    #   click-plugins
+    #   click-repl
     #   code-annotations
     #   edx-django-utils
     #   edx-lint
+click-didyoumean==0.3.1
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   celery
 click-log==0.4.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-lint
+click-plugins==1.1.1.2
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   celery
+click-repl==0.4.1
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   celery
 code-annotations==3.0.0
     # via
     #   -r requirements/quality.txt
@@ -95,7 +129,7 @@ confluent-kafka[avro,schema-registry]==2.16.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-coverage[toml]==7.17.0
+coverage[toml]==7.17.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -129,7 +163,7 @@ distlib==0.4.4
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   virtualenv
-django==5.2.18
+django==5.2.19
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -228,7 +262,7 @@ djangorestframework==3.18.3
     #   drf-spectacular
     #   drf-yasg
     #   edx-drf-extensions
-dnspython==2.9.1
+dnspython==2.9.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -326,7 +360,7 @@ fastavro==1.13.1
     #   -r requirements/test.txt
     #   confluent-kafka
     #   openedx-events
-filelock==4.2.4
+filelock==4.2.7
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -406,7 +440,7 @@ jinja2==3.1.6
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   code-annotations
-joserfc==1.7.7
+joserfc==1.8.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -431,6 +465,11 @@ keyring==25.7.0
     # via
     #   -r requirements/quality.txt
     #   twine
+kombu==5.7.0
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   celery
 markdown-it-py==4.2.0
     # via
     #   -r requirements/quality.txt
@@ -458,7 +497,7 @@ more-itertools==11.2.1
     #   -r requirements/quality.txt
     #   jaraco-classes
     #   jaraco-functools
-mypy-extensions==1.1.0
+mypy-extensions==1.2.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -472,7 +511,7 @@ nh3==0.3.7
     # via
     #   -r requirements/quality.txt
     #   readme-renderer
-oauthlib==4.0.0
+oauthlib==4.0.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -483,7 +522,7 @@ openedx-atlas==0.7.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-openedx-events==11.2.0
+openedx-events==11.3.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -503,7 +542,7 @@ packaging==26.3
     #   tox
     #   twine
     #   virtualenv
-platformdirs==4.14.0
+platformdirs==4.14.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -522,6 +561,11 @@ ply==3.11
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   djangoql
+prompt-toolkit==3.0.53
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   click-repl
 psutil==7.2.2
     # via
     #   -r requirements/quality.txt
@@ -590,7 +634,7 @@ pynacl==1.6.2
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-pyproject-api==1.12.2
+pyproject-api==1.12.3
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -609,11 +653,12 @@ pytest-django==4.14.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-python-dateutil==3.0.0
+python-dateutil==4.0.0
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
-python-discovery==1.6.7
+    #   celery
+python-discovery==1.9.2
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -724,7 +769,6 @@ six==1.17.0
     #   edx-django-release-util
     #   edx-lint
     #   edx-rbac
-    #   python-dateutil
 snowballstemmer==3.1.1
     # via
     #   -r requirements/quality.txt
@@ -740,7 +784,7 @@ social-auth-core==4.9.1
     #   -r requirements/test.txt
     #   edx-auth-backends
     #   social-auth-app-django
-sqlparse==0.6.0
+sqlparse==0.6.1
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -773,7 +817,7 @@ tomlkit==0.15.2
     #   -r requirements/test.txt
     #   edx-lint
     #   pylint
-tox==4.67.4
+tox==4.67.8
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
@@ -790,6 +834,7 @@ typing-extensions==4.16.0
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   anyio
+    #   click-repl
     #   edx-opaque-keys
     #   httpx2
     #   referencing
@@ -800,6 +845,11 @@ tzdata==2026.6
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   python-dateutil
+tzlocal==5.4.5
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   celery
 uritemplate==4.2.0
     # via
     #   -r requirements/quality.txt
@@ -814,11 +864,23 @@ urllib3==2.8.0
     #   requests
     #   responses
     #   twine
-virtualenv==21.15.1
+vine==5.1.0
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   amqp
+    #   celery
+    #   kombu
+virtualenv==21.15.4
     # via
     #   -r requirements/quality.txt
     #   -r requirements/test.txt
     #   tox
+wcwidth==0.9.4
+    # via
+    #   -r requirements/quality.txt
+    #   -r requirements/test.txt
+    #   prompt-toolkit
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

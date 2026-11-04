@@ -8,7 +8,11 @@ accessible-pygments==0.0.5
     # via pydata-sphinx-theme
 alabaster==1.0.0
     # via sphinx
-anyio==4.15.1
+amqp==5.4.2
+    # via
+    #   -r requirements/test.txt
+    #   kombu
+anyio==4.16.0
     # via
     #   -r requirements/test.txt
     #   httpx2
@@ -30,7 +34,7 @@ attrs==26.1.0
     #   jsonschema
     #   openedx-events
     #   referencing
-authlib==1.9.1
+authlib==1.9.3
     # via
     #   -r requirements/test.txt
     #   confluent-kafka
@@ -46,13 +50,21 @@ backoff==2.2.1
     # via -r requirements/test.txt
 beautifulsoup4==4.15.0
     # via pydata-sphinx-theme
+billiard==4.3.2
+    # via
+    #   -r requirements/test.txt
+    #   celery
 build==1.6.1
     # via -r requirements/doc.in
-cachetools==7.2.7
+cachetools==7.2.8
     # via
     #   -r requirements/test.txt
     #   confluent-kafka
     #   tox
+celery==5.6.3
+    # via
+    #   -r requirements/test.txt
+    #   openedx-events
 certifi==2026.10.23
     # via
     #   -r requirements/test.txt
@@ -70,14 +82,30 @@ charset-normalizer==3.5.2
 click==8.5.0
     # via
     #   -r requirements/test.txt
+    #   celery
+    #   click-didyoumean
     #   click-log
+    #   click-plugins
+    #   click-repl
     #   code-annotations
     #   edx-django-utils
     #   edx-lint
+click-didyoumean==0.3.1
+    # via
+    #   -r requirements/test.txt
+    #   celery
 click-log==0.4.0
     # via
     #   -r requirements/test.txt
     #   edx-lint
+click-plugins==1.1.1.2
+    # via
+    #   -r requirements/test.txt
+    #   celery
+click-repl==0.4.1
+    # via
+    #   -r requirements/test.txt
+    #   celery
 code-annotations==3.0.0
     # via
     #   -r requirements/test.txt
@@ -89,7 +117,7 @@ colorama==0.4.6
     #   tox
 confluent-kafka[avro,schema-registry]==2.16.1
     # via -r requirements/test.txt
-coverage[toml]==7.17.0
+coverage[toml]==7.17.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -116,7 +144,7 @@ distlib==0.4.4
     # via
     #   -r requirements/test.txt
     #   virtualenv
-django==5.2.18
+django==5.2.19
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test.txt
@@ -197,7 +225,7 @@ djangorestframework==3.18.3
     #   drf-spectacular
     #   drf-yasg
     #   edx-drf-extensions
-dnspython==2.9.1
+dnspython==2.9.2
     # via
     #   -r requirements/test.txt
     #   pymongo
@@ -275,7 +303,7 @@ fastavro==1.13.1
     #   -r requirements/test.txt
     #   confluent-kafka
     #   openedx-events
-filelock==4.2.4
+filelock==4.2.7
     # via
     #   -r requirements/test.txt
     #   python-discovery
@@ -338,7 +366,7 @@ jinja2==3.1.6
     #   code-annotations
     #   pydata-sphinx-theme
     #   sphinx
-joserfc==1.7.7
+joserfc==1.8.0
     # via
     #   -r requirements/test.txt
     #   authlib
@@ -357,6 +385,10 @@ jsonschema-specifications==2025.9.1
     #   jsonschema
 keyring==25.7.0
     # via twine
+kombu==5.7.0
+    # via
+    #   -r requirements/test.txt
+    #   celery
 markdown-it-py==4.2.0
     # via rich
 markupsafe==3.0.4
@@ -375,7 +407,7 @@ more-itertools==11.2.1
     # via
     #   jaraco-classes
     #   jaraco-functools
-mypy-extensions==1.1.0
+mypy-extensions==1.2.0
     # via
     #   -r requirements/test.txt
     #   isort
@@ -385,7 +417,7 @@ mysqlclient==2.3.0
     #   openedx-ledger
 nh3==0.3.7
     # via readme-renderer
-oauthlib==4.0.0
+oauthlib==4.0.1
     # via
     #   -r requirements/test.txt
     #   getsmarter-api-clients
@@ -393,7 +425,7 @@ oauthlib==4.0.0
     #   social-auth-core
 openedx-atlas==0.7.2
     # via -r requirements/test.txt
-openedx-events==11.2.0
+openedx-events==11.3.0
     # via
     #   -r requirements/test.txt
     #   edx-event-bus-kafka
@@ -411,7 +443,7 @@ packaging==26.3
     #   tox
     #   twine
     #   virtualenv
-platformdirs==4.14.0
+platformdirs==4.14.3
     # via
     #   -r requirements/test.txt
     #   pylint
@@ -427,6 +459,10 @@ ply==3.11
     # via
     #   -r requirements/test.txt
     #   djangoql
+prompt-toolkit==3.0.53
+    # via
+    #   -r requirements/test.txt
+    #   click-repl
 psutil==7.2.2
     # via
     #   -r requirements/test.txt
@@ -485,7 +521,7 @@ pynacl==1.6.2
     # via
     #   -r requirements/test.txt
     #   edx-django-utils
-pyproject-api==1.12.2
+pyproject-api==1.12.3
     # via
     #   -r requirements/test.txt
     #   tox
@@ -500,9 +536,11 @@ pytest-cov==7.1.0
     # via -r requirements/test.txt
 pytest-django==4.14.0
     # via -r requirements/test.txt
-python-dateutil==3.0.0
-    # via -r requirements/test.txt
-python-discovery==1.6.7
+python-dateutil==4.0.0
+    # via
+    #   -r requirements/test.txt
+    #   celery
+python-discovery==1.9.2
     # via
     #   -r requirements/test.txt
     #   tox
@@ -594,7 +632,6 @@ six==1.17.0
     #   edx-django-release-util
     #   edx-lint
     #   edx-rbac
-    #   python-dateutil
 snowballstemmer==3.1.1
     # via sphinx
 social-auth-app-django==5.9.0
@@ -610,7 +647,7 @@ social-auth-core==4.9.1
     #   -r requirements/test.txt
     #   edx-auth-backends
     #   social-auth-app-django
-soupsieve==3.0.4
+soupsieve==4.0
     # via beautifulsoup4
 sphinx==9.1.1
     # via
@@ -631,7 +668,7 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-sqlparse==0.6.0
+sqlparse==0.6.1
     # via
     #   -r requirements/test.txt
     #   django
@@ -659,7 +696,7 @@ tomlkit==0.15.2
     #   -r requirements/test.txt
     #   edx-lint
     #   pylint
-tox==4.67.4
+tox==4.67.8
     # via -r requirements/test.txt
 truststore==0.10.5
     # via
@@ -673,6 +710,7 @@ typing-extensions==4.16.0
     #   -r requirements/test.txt
     #   anyio
     #   beautifulsoup4
+    #   click-repl
     #   edx-opaque-keys
     #   httpx2
     #   referencing
@@ -682,6 +720,10 @@ tzdata==2026.6
     # via
     #   -r requirements/test.txt
     #   python-dateutil
+tzlocal==5.4.5
+    # via
+    #   -r requirements/test.txt
+    #   celery
 uritemplate==4.2.0
     # via
     #   -r requirements/test.txt
@@ -694,10 +736,20 @@ urllib3==2.8.0
     #   requests
     #   responses
     #   twine
-virtualenv==21.15.1
+vine==5.1.0
+    # via
+    #   -r requirements/test.txt
+    #   amqp
+    #   celery
+    #   kombu
+virtualenv==21.15.4
     # via
     #   -r requirements/test.txt
     #   tox
+wcwidth==0.9.4
+    # via
+    #   -r requirements/test.txt
+    #   prompt-toolkit
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
