@@ -20,6 +20,10 @@ also returns 422.
 
 - **Replay lookup runs before the expired-subsidy check**, so a retry still gets 200 after expiry. A new key on an
   expired subsidy still gets 422 `deposit_on_expired_subsidy`.
+- **Metadata is not compared.** Only quantity, reference ID and provider decide replay vs 409; a replay returns the
+  original deposit as created, ignoring any new metadata.
+- **A keyed request is validated before the expired-subsidy check**, so an invalid keyed body on an expired subsidy
+  gets 400 rather than 422.
 - **The lock error arrives wrapped twice.** `openedx_ledger.api.create_deposit()` wraps every failure (including
   `LedgerLockAttemptFailed`) in `openedx_ledger.api.DepositCreationError`, and the v2 serializer wraps that again in
   its own `DepositCreationError`. The view walks the `__cause__` chain (`_is_ledger_lock_error`). The v2 transaction
