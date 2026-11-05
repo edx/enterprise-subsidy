@@ -8,7 +8,7 @@ from django.utils.functional import cached_property
 from drf_spectacular.utils import extend_schema
 from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
-from openedx_ledger.models import Deposit, LedgerLockAttemptFailed, Transaction
+from openedx_ledger.models import LedgerLockAttemptFailed, Transaction
 from requests.exceptions import HTTPError
 from rest_framework import generics, permissions, status
 from rest_framework.authentication import SessionAuthentication
@@ -49,10 +49,6 @@ class DepositAdminCreate(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = DepositCreationRequestSerializer
 
-    def __init__(self, *args, **kwargs):
-        self.extra_context = {}
-        super().__init__(*args, **kwargs)
-
     @property
     def requested_subsidy_uuid(self):
         """
@@ -66,17 +62,6 @@ class DepositAdminCreate(generics.CreateAPIView):
         Returns the Subsidy instance from the requested ``subsidy_uuid``.
         """
         return get_subsidy_by_uuid(self.requested_subsidy_uuid, should_raise=True)
-
-    def set_created(self, created):
-        """
-        Note: This created context setter/getter framework is really only here for when we eventually make deposit
-        creation actually idempotent, but for now it's just for show because we only ever pass True from the serializer.
-        """
-        self.extra_context['created'] = created
-
-    @property
-    def created(self):
-        return self.extra_context.get('created', True)
 
     @permission_required(PERMISSION_CAN_CREATE_DEPOSITS, fn=get_subsidy_customer_uuid_from_view)
     @extend_schema(
@@ -112,10 +97,7 @@ class DepositAdminCreate(generics.CreateAPIView):
                 code=ErrorCodes.DEPOSIT_ON_EXPIRED_SUBSIDY_ERROR,
             )
         try:
-            response = super().create(request, subsidy_uuid)
-            if not self.created:
-                response.status_code = status.HTTP_200_OK
-            return response  # The default create() response status is HTTP_201_CREATED
+            return super().create(request, subsidy_uuid)
         except (HTTPError, DepositCreationError) as exc:
             if idempotency_key is not None:
                 if _is_ledger_lock_error(exc):
@@ -135,26 +117,25 @@ class DepositAdminCreate(generics.CreateAPIView):
         """
         Returns the Deposit for the requested idempotency_key, or None. Raises a 409 if its values differ.
         """
-        existing_deposit = Deposit.objects.filter(
+        # One query: the Transaction and its Deposit are committed together, so read them from the same snapshot.
+        existing_transaction = Transaction.objects.select_related('deposit').filter(
             ledger=self.subsidy.ledger,
-            transaction__idempotency_key=validated_data['idempotency_key'],
+            idempotency_key=validated_data['idempotency_key'],
         ).first()
+        if not existing_transaction:
+            return None
+        existing_deposit = getattr(existing_transaction, 'deposit', None)
         if not existing_deposit:
             # openedx-ledger would reuse a non-deposit Transaction with this key (e.g. a redemption) and attach the new
             # Deposit to it without crediting the ledger.
-            if Transaction.objects.filter(
-                ledger=self.subsidy.ledger,
-                idempotency_key=validated_data['idempotency_key'],
-            ).exists():
-                raise DepositCreationAPIException(
-                    detail=(
-                        f'idempotency_key {validated_data["idempotency_key"]} is already used by a non-deposit '
-                        'transaction in this subsidy.'
-                    ),
-                    code=ErrorCodes.DEPOSIT_IDEMPOTENCY_CONFLICT,
-                    status_code=status.HTTP_409_CONFLICT,
-                )
-            return None
+            raise DepositCreationAPIException(
+                detail=(
+                    f'idempotency_key {validated_data["idempotency_key"]} is already used by a non-deposit '
+                    'transaction in this subsidy.'
+                ),
+                code=ErrorCodes.DEPOSIT_IDEMPOTENCY_CONFLICT,
+                status_code=status.HTTP_409_CONFLICT,
+            )
         if (
             existing_deposit.desired_deposit_quantity != validated_data['desired_deposit_quantity']
             or existing_deposit.sales_contract_reference_id != validated_data['sales_contract_reference_id']

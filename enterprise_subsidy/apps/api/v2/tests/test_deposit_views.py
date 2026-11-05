@@ -499,9 +499,12 @@ class KeyedDepositCreateViewTests(APITestMixin):
         assert not self._keyed_deposits().exists()
 
     @ddt.data(
-        ('desired_deposit_quantity', 200000),
-        ('sales_contract_reference_id', 'R2'),
-        ('sales_contract_reference_provider', STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG),
+        # Different quantity.
+        {"field": "desired_deposit_quantity", "changed_value": 200000},
+        # Different sales contract reference ID.
+        {"field": "sales_contract_reference_id", "changed_value": "R2"},
+        # Different sales contract reference provider.
+        {"field": "sales_contract_reference_provider", "changed_value": STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG},
     )
     @ddt.unpack
     def test_same_key_with_different_values_is_conflict(self, field, changed_value):
