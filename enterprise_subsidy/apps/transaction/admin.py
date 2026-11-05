@@ -11,8 +11,10 @@ from openedx_ledger.admin import LedgerAdmin as BaseLedgerAdmin
 from openedx_ledger.admin import TransactionAdmin as BaseTransactionAdmin
 from openedx_ledger.models import Adjustment, Deposit, Ledger, Transaction
 
+from enterprise_subsidy.apps.core.admin import ReadOnlyAdminMixin
 from enterprise_subsidy.apps.subsidy.models import Subsidy
 from enterprise_subsidy.apps.transaction import views
+from enterprise_subsidy.apps.transaction.models import SplitEnrollmentLeg, SplitEnrollmentRecord
 
 admin.site.unregister(Adjustment)
 admin.site.unregister(Deposit)
@@ -167,5 +169,96 @@ class DepositAdmin(DjangoQLSearchMixin, BaseDepositAdmin):
     )
     djangoql_completion_enabled_by_default = False
     list_filter = [
+        'created',
+    ]
+
+
+class SplitEnrollmentLegInline(ReadOnlyAdminMixin, admin.TabularInline):
+    """
+    Read-only inline view of the legs within the ``SplitEnrollmentRecordAdmin`` class.
+    """
+    model = SplitEnrollmentLeg
+    fields = ['uuid', 'leg_order', 'transaction', 'created']
+    # Unlike a ModelAdmin, an inline's formset still builds its form fields in view-only mode, so non-editable
+    # fields must be listed as read-only.
+    readonly_fields = fields
+    ordering = ['leg_order']
+    show_change_link = True
+    extra = 0
+
+
+@admin.register(SplitEnrollmentRecord)
+class SplitEnrollmentRecordAdmin(ReadOnlyAdminMixin, DjangoQLSearchMixin, admin.ModelAdmin):
+    """
+    Read-only admin for split enrollment records.
+    """
+    djangoql_completion_enabled_by_default = False
+
+    list_display = [
+        'uuid',
+        'enterprise_customer_uuid',
+        'lms_user_id',
+        'content_key',
+        'state',
+        'total_quantity',
+        'created',
+    ]
+    list_filter = [
+        'state',
+    ]
+    search_fields = (
+        'uuid',
+        'enterprise_customer_uuid',
+        'lms_user_id',
+        'content_key',
+        'fulfillment_identifier',
+    )
+    fields = [
+        'uuid',
+        'enterprise_customer_uuid',
+        'lms_user_id',
+        'content_key',
+        'is_live',
+        'state',
+        'failure_reason',
+        'planned_legs',
+        'total_quantity',
+        'fulfillment_identifier',
+        'created',
+        'modified',
+    ]
+    inlines = [
+        SplitEnrollmentLegInline,
+    ]
+
+
+@admin.register(SplitEnrollmentLeg)
+class SplitEnrollmentLegAdmin(ReadOnlyAdminMixin, DjangoQLSearchMixin, admin.ModelAdmin):
+    """
+    Read-only admin for split enrollment legs.
+    """
+    djangoql_completion_enabled_by_default = False
+
+    list_display = [
+        'uuid',
+        'split_record',
+        'leg_order',
+        'transaction',
+        'created',
+    ]
+    list_select_related = [
+        'split_record',
+        'transaction',
+    ]
+    search_fields = (
+        'uuid',
+        'split_record__uuid',
+        'transaction__uuid',
+    )
+    fields = [
+        'uuid',
+        'split_record',
+        'leg_order',
+        'transaction',
         'created',
     ]
