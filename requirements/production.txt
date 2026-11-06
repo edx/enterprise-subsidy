@@ -273,7 +273,7 @@ mysqlclient==2.3.0
     #   -r requirements/base.txt
     #   -r requirements/production.in
     #   openedx-ledger
-oauthlib==4.0.0
+oauthlib==4.0.1
     # via
     #   -r requirements/base.txt
     #   getsmarter-api-clients
