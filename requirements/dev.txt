@@ -407,7 +407,7 @@ nh3==0.3.7
     # via
     #   -r requirements/validation.txt
     #   readme-renderer
-oauthlib==4.0.0
+oauthlib==4.0.1
     # via
     #   -r requirements/validation.txt
     #   getsmarter-api-clients
