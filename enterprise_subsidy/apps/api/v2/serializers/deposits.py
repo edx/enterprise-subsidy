@@ -175,5 +175,4 @@ class DepositCreationRequestSerializer(serializers.ModelSerializer):
             )
             raise DepositCreationError('Deposit was None after attempting to redeem')
 
-        self.calling_view.set_created(True)
         return deposit
