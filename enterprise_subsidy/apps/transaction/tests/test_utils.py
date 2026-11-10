@@ -9,7 +9,7 @@ from django.test import TestCase
 from opaque_keys.edx.locator import CourseLocator
 from openedx_ledger.test_utils.factories import LedgerFactory, TransactionFactory
 
-from enterprise_subsidy.apps.transaction.utils import unenrollment_can_be_refunded
+from enterprise_subsidy.apps.transaction.utils import reserved_metadata_keys, unenrollment_can_be_refunded
 
 
 @ddt.ddt
@@ -142,3 +142,39 @@ class TransactionUtilsTestCase(TestCase):
             test_enterprise_course_enrollment,
             transaction,
         ) == expected_refundable
+
+
+class ReservedMetadataKeysTestCase(TestCase):
+    """
+    Tests for reserved_metadata_keys().
+    """
+
+    def test_only_parameters_a_metadata_key_can_bind_to_are_reserved(self):
+        """
+        Positional-or-keyword and keyword-only parameters are reserved. Positional-only parameters, ``*args`` and
+        ``**metadata`` are not, because a ``**metadata`` key can't bind to them.
+        """
+        # pylint: disable=unused-argument
+        def _forward(positional_only, /, positional_or_keyword, *args, keyword_only, **metadata):
+            """
+            Stand-in for a ledger function that receives ``**metadata``.
+            """
+
+        assert reserved_metadata_keys(_forward) == {'positional_or_keyword', 'keyword_only'}
+
+    def test_reserved_keys_are_collected_from_every_function(self):
+        """
+        Metadata forwarded through several functions can bind to a parameter of any of them.
+        """
+        # pylint: disable=unused-argument
+        def _outer(ledger, quantity, **metadata):
+            """
+            Stand-in for ``openedx_ledger.api.create_deposit()``.
+            """
+
+        def _inner(ledger, state=None, **metadata):
+            """
+            Stand-in for ``openedx_ledger.api.create_transaction()``.
+            """
+
+        assert reserved_metadata_keys(_outer, _inner) == {'ledger', 'quantity', 'state'}

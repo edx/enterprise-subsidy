@@ -2,15 +2,20 @@
 Tests for the v2 deposit views.
 """
 import uuid
+from contextlib import nullcontext
 from datetime import timedelta
+from unittest import mock
 
 import ddt
 from django.utils import timezone
-from openedx_ledger.models import Deposit, SalesContractReferenceProvider
+from openedx_ledger import api as ledger_api
+from openedx_ledger.models import Deposit, SalesContractReferenceProvider, Transaction, TransactionStateChoices
 from rest_framework import status
 from rest_framework.reverse import reverse
 
+from enterprise_subsidy.apps.api.exceptions import ErrorCodes
 from enterprise_subsidy.apps.api.v1.tests.mixins import STATIC_ENTERPRISE_UUID, APITestMixin
+from enterprise_subsidy.apps.api.v2.views.deposit import DepositAdminCreate
 from enterprise_subsidy.apps.subsidy.constants import STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG
 from enterprise_subsidy.apps.subsidy.models import SubsidyReferenceChoices
 from enterprise_subsidy.apps.subsidy.tests.factories import SubsidyFactory
@@ -25,6 +30,28 @@ class DepositCreateViewTests(APITestMixin):
     """
     Test deposit creation via the deposit-admin-create view.
     """
+
+    def _create_subsidy(self, subsidy_active=True, subsidy_expired=False):
+        """
+        Helper to create a subsidy (with ledger) in the operator's enterprise. An inactive subsidy is either expired or
+        will become active in the future.
+        """
+        if subsidy_active:
+            active_datetime = timezone.now() - timedelta(days=1)
+            expiration_datetime = timezone.now() + timedelta(days=1)
+        else:
+            if subsidy_expired:
+                active_datetime = timezone.now() - timedelta(days=2)
+                expiration_datetime = timezone.now() - timedelta(days=1)
+            else:
+                active_datetime = timezone.now() + timedelta(days=1)
+                expiration_datetime = timezone.now() + timedelta(days=2)
+
+        return SubsidyFactory(
+            enterprise_customer_uuid=STATIC_ENTERPRISE_UUID,
+            active_datetime=active_datetime,
+            expiration_datetime=expiration_datetime,
+        )
 
     @ddt.data(
         ###
@@ -72,6 +99,30 @@ class DepositCreateViewTests(APITestMixin):
                 # Test getting a null metadata value.
                 "metadata": None,
             },
+            "expected_response_status": status.HTTP_201_CREATED,
+        },
+        {
+            "subsidy_active": True,
+            "creation_request_data": {
+                "desired_deposit_quantity": 100,
+                "sales_contract_reference_id": str(uuid.uuid4()),
+                "sales_contract_reference_provider": DEFAULT_SALES_CONTRACT_REFERENCE_PROVIDER_SLUG,
+                # Test getting an empty metadata object.
+                "metadata": {},
+            },
+            "expected_response_status": status.HTTP_201_CREATED,
+        },
+        {
+            "subsidy_active": True,
+            # Form clients send metadata as a JSON string, which must be parsed rather than dropped.
+            "creation_request_data": {
+                "desired_deposit_quantity": 100,
+                "sales_contract_reference_id": str(uuid.uuid4()),
+                "sales_contract_reference_provider": DEFAULT_SALES_CONTRACT_REFERENCE_PROVIDER_SLUG,
+                "metadata": '{"foo": "bar"}',
+            },
+            "request_format": "multipart",
+            "expected_metadata": {"foo": "bar"},
             "expected_response_status": status.HTTP_201_CREATED,
         },
         {
@@ -153,33 +204,19 @@ class DepositCreateViewTests(APITestMixin):
         creation_request_data,
         expected_response_status,
         subsidy_expired=False,
+        request_format="json",
+        expected_metadata=None,
     ):
         """
         Test that the DepositCreationRequestSerializer correctly creates a deposit idempotently OR fails with the
         correct status code.
         """
         self.set_up_operator()
-
-        if subsidy_active:
-            active_datetime = timezone.now() - timedelta(days=1)
-            expiration_datetime = timezone.now() + timedelta(days=1)
-        else:
-            if subsidy_expired:
-                active_datetime = timezone.now() - timedelta(days=2)
-                expiration_datetime = timezone.now() - timedelta(days=1)
-            else:
-                active_datetime = timezone.now() + timedelta(days=1)
-                expiration_datetime = timezone.now() + timedelta(days=2)
-
-        subsidy = SubsidyFactory(
-            enterprise_customer_uuid=STATIC_ENTERPRISE_UUID,
-            active_datetime=active_datetime,
-            expiration_datetime=expiration_datetime,
-        )
+        subsidy = self._create_subsidy(subsidy_active, subsidy_expired)
 
         url = reverse("api:v2:deposit-admin-create", args=[subsidy.uuid])
 
-        response = self.client.post(url, creation_request_data)
+        response = self.client.post(url, creation_request_data, format=request_format)
         assert response.status_code == expected_response_status
         if response.status_code < 300:
             assert response.data["ledger"] == subsidy.ledger.uuid
@@ -189,17 +226,135 @@ class DepositCreateViewTests(APITestMixin):
                 creation_request_data["sales_contract_reference_provider"]
             assert Deposit.objects.count() == 2
             created_deposit = Deposit.objects.get(uuid=response.data["uuid"])
-            assert created_deposit.transaction.metadata == (creation_request_data.get("metadata") or {})
+            assert created_deposit.transaction.metadata == (
+                expected_metadata or creation_request_data.get("metadata") or {}
+            )
+            # Metadata must not leak into any ledger column a metadata key could have been unpacked into.
+            for column in ("subsidy_access_policy_uuid", "lms_user_id", "lms_user_email", "content_key"):
+                assert getattr(created_deposit.transaction, column) is None
             if "idempotency_key" in creation_request_data:
                 assert created_deposit.transaction.idempotency_key == creation_request_data["idempotency_key"]
         else:
             assert Deposit.objects.count() == 1
 
-        response_x2 = self.client.post(url, creation_request_data)
-        if expected_response_status == status.HTTP_201_CREATED:
+        response_x2 = self.client.post(url, creation_request_data, format=request_format)
+        if expected_response_status == status.HTTP_201_CREATED and "idempotency_key" in creation_request_data:
+            # A keyed replay returns the original deposit.
+            assert response_x2.status_code == status.HTTP_200_OK
+            assert response_x2.data == response.data
+            assert Deposit.objects.count() == 2
+        elif expected_response_status == status.HTTP_201_CREATED:
             assert response_x2.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         else:
             assert response_x2.status_code == expected_response_status
+
+    @ddt.data(
+        ###
+        # Keys that clash with openedx_ledger.api.create_deposit() or create_transaction() parameters.
+        ###
+        {
+            "metadata": {
+                "source": "learner_credit_top_up",
+                "subsidy_access_policy_uuid": "11111111-1111-1111-1111-111111111111",
+            },
+            "expected_error_code": "invalid",
+            "expected_reserved_keys": "subsidy_access_policy_uuid",
+        },
+        {
+            "metadata": {"source": "learner_credit_top_up", "lms_user_id": 12345},
+            "expected_error_code": "invalid",
+            "expected_reserved_keys": "lms_user_id",
+        },
+        {
+            "metadata": {"source": "learner_credit_top_up", "deposit_uuid": "22222222-2222-2222-2222-222222222222"},
+            "expected_error_code": "invalid",
+            "expected_reserved_keys": "deposit_uuid",
+        },
+        {
+            "metadata": {"source": "learner_credit_top_up", "state": "committed"},
+            "expected_error_code": "invalid",
+            "expected_reserved_keys": "state",
+        },
+        {
+            "metadata": {"source": "learner_credit_top_up", "quantity": 999},
+            "expected_error_code": "invalid",
+            "expected_reserved_keys": "quantity",
+        },
+        ###
+        # Metadata that is not a JSON object, even when it is empty or falsy.
+        ###
+        {
+            "metadata": ["not", "an", "object"],
+            "expected_error_code": "not_a_dict",
+        },
+        {
+            "metadata": "not-an-object",
+            "expected_error_code": "not_a_dict",
+        },
+        {
+            "metadata": [],
+            "expected_error_code": "not_a_dict",
+        },
+        {
+            "metadata": "",
+            "expected_error_code": "not_a_dict",
+        },
+        {
+            "metadata": 0,
+            "expected_error_code": "not_a_dict",
+        },
+        {
+            "metadata": False,
+            "expected_error_code": "not_a_dict",
+        },
+        ###
+        # Form clients send metadata as a JSON string; it is parsed and validated the same way.
+        ###
+        {
+            "metadata": '{"source": "learner_credit_top_up", "state": "committed"}',
+            "request_format": "multipart",
+            "expected_error_code": "invalid",
+            "expected_reserved_keys": "state",
+        },
+        {
+            "metadata": '[1, 2]',
+            "request_format": "multipart",
+            "expected_error_code": "not_a_dict",
+        },
+    )
+    @ddt.unpack
+    def test_deposit_creation_rejects_invalid_metadata(
+        self,
+        metadata,
+        expected_error_code,
+        expected_reserved_keys=None,
+        request_format="json",
+    ):
+        """
+        Metadata that is not a JSON object, or whose keys clash with ledger function parameters, is rejected with a 400
+        instead of failing when unpacked as kwargs, and no Deposit or Transaction is created.
+        """
+        self.set_up_operator()
+        subsidy = self._create_subsidy()
+        url = reverse("api:v2:deposit-admin-create", args=[subsidy.uuid])
+        deposit_count_before = Deposit.objects.count()
+        transaction_count_before = Transaction.objects.count()
+
+        response = self.client.post(url, {
+            "desired_deposit_quantity": 100,
+            "sales_contract_reference_id": str(uuid.uuid4()),
+            "sales_contract_reference_provider": DEFAULT_SALES_CONTRACT_REFERENCE_PROVIDER_SLUG,
+            "metadata": metadata,
+        }, format=request_format)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        [error] = response.data["metadata"]
+        assert error.code == expected_error_code
+        if expected_reserved_keys:
+            # Only the text after the colon lists the keys; the message prefix itself mentions "ledger".
+            assert str(error).split(": ", 1)[1] == expected_reserved_keys
+        assert Deposit.objects.count() == deposit_count_before
+        assert Transaction.objects.count() == transaction_count_before
 
     @ddt.data(
         {
@@ -259,3 +414,234 @@ class DepositCreateViewTests(APITestMixin):
         response = self.client.post(url, creation_request_data)
 
         assert response.status_code == expected_response_status
+
+
+@ddt.ddt
+class KeyedDepositCreateViewTests(APITestMixin):
+    """
+    Test that deposit requests carrying an idempotency_key are safe to retry.
+    """
+    IDEMPOTENCY_KEY = 'K'
+
+    def setUp(self):
+        super().setUp()
+        self.set_up_operator()
+        self.subsidy = SubsidyFactory(
+            enterprise_customer_uuid=STATIC_ENTERPRISE_UUID,
+            active_datetime=timezone.now() - timedelta(days=1),
+            expiration_datetime=timezone.now() + timedelta(days=1),
+        )
+        self.url = reverse("api:v2:deposit-admin-create", args=[self.subsidy.uuid])
+        self.request_data = {
+            "desired_deposit_quantity": 100000,
+            "sales_contract_reference_id": "R",
+            "sales_contract_reference_provider": DEFAULT_SALES_CONTRACT_REFERENCE_PROVIDER_SLUG,
+            "idempotency_key": self.IDEMPOTENCY_KEY,
+        }
+
+    def _keyed_deposits(self):
+        return Deposit.objects.filter(ledger=self.subsidy.ledger, transaction__idempotency_key=self.IDEMPOTENCY_KEY)
+
+    def test_first_keyed_request_creates_deposit(self):
+        """
+        The first keyed request creates exactly one Deposit and one committed Transaction.
+        """
+        response = self.client.post(self.url, self.request_data)
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert self._keyed_deposits().count() == 1
+        transactions = Transaction.objects.filter(ledger=self.subsidy.ledger, idempotency_key=self.IDEMPOTENCY_KEY)
+        assert transactions.count() == 1
+        assert transactions.first().state == TransactionStateChoices.COMMITTED
+
+    def test_replay_returns_original_deposit(self):
+        """
+        Repeating a keyed request returns the original deposit with a 200 and credits the ledger only once.
+        """
+        starting_balance = self.subsidy.ledger.balance()
+        first_response = self.client.post(self.url, self.request_data)
+        assert first_response.status_code == status.HTTP_201_CREATED
+
+        replay_response = self.client.post(self.url, self.request_data)
+
+        assert replay_response.status_code == status.HTTP_200_OK
+        assert replay_response.data == first_response.data
+        assert self._keyed_deposits().count() == 1
+        assert self.subsidy.ledger.balance() == starting_balance + self.request_data['desired_deposit_quantity']
+
+    def test_replay_after_subsidy_expires_returns_original_deposit(self):
+        """
+        The replay check runs before the expired-subsidy check, so a replay still returns 200 after expiry.
+        """
+        first_response = self.client.post(self.url, self.request_data)
+        assert first_response.status_code == status.HTTP_201_CREATED
+        self.subsidy.active_datetime = timezone.now() - timedelta(days=3)
+        self.subsidy.expiration_datetime = timezone.now() - timedelta(days=1)
+        self.subsidy.save()
+
+        replay_response = self.client.post(self.url, self.request_data)
+
+        assert replay_response.status_code == status.HTTP_200_OK
+        assert replay_response.data == first_response.data
+
+    def test_new_key_on_expired_subsidy_is_still_rejected(self):
+        """
+        A keyed request with no existing deposit still hits the expired-subsidy check.
+        """
+        self.subsidy.active_datetime = timezone.now() - timedelta(days=3)
+        self.subsidy.expiration_datetime = timezone.now() - timedelta(days=1)
+        self.subsidy.save()
+
+        response = self.client.post(self.url, self.request_data)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.data['code'] == ErrorCodes.DEPOSIT_ON_EXPIRED_SUBSIDY_ERROR
+        assert not self._keyed_deposits().exists()
+
+    @ddt.data(
+        # Different quantity.
+        {"field": "desired_deposit_quantity", "changed_value": 200000},
+        # Different sales contract reference ID.
+        {"field": "sales_contract_reference_id", "changed_value": "R2"},
+        # Different sales contract reference provider.
+        {"field": "sales_contract_reference_provider", "changed_value": STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG},
+    )
+    @ddt.unpack
+    def test_same_key_with_different_values_is_conflict(self, field, changed_value):
+        """
+        Reusing a key with a different quantity, reference ID or provider returns 409 and creates nothing.
+        """
+        assert self.client.post(self.url, self.request_data).status_code == status.HTTP_201_CREATED
+        deposit_count = Deposit.objects.count()
+        transaction_count = Transaction.objects.count()
+
+        response = self.client.post(self.url, {**self.request_data, field: changed_value})
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.data['code'] == ErrorCodes.DEPOSIT_IDEMPOTENCY_CONFLICT
+        assert Deposit.objects.count() == deposit_count
+        assert Transaction.objects.count() == transaction_count
+
+    def test_ledger_lock_contention_is_retryable(self):
+        """
+        A keyed request against a locked ledger returns 429, and succeeds once the lock is released.
+        """
+        assert self.subsidy.ledger.acquire_lock()
+        try:
+            locked_response = self.client.post(self.url, self.request_data)
+        finally:
+            self.subsidy.ledger.release_lock()
+
+        assert locked_response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+        assert locked_response.data['code'] == ErrorCodes.LEDGER_LOCK_ERROR
+        assert not self._keyed_deposits().exists()
+
+        retry_response = self.client.post(self.url, self.request_data)
+        assert retry_response.status_code == status.HTTP_201_CREATED
+        assert self._keyed_deposits().count() == 1
+
+    @ddt.data(
+        # The winner committed after our get_or_create() looked for its Transaction, so our Transaction insert hits
+        # the ledger's (ledger, idempotency_key) unique constraint.
+        True,
+        # The winner committed before our get_or_create(), which then returns the winner's Transaction, so our
+        # Deposit insert hits the Deposit.transaction one-to-one constraint.
+        False,
+    )
+    def test_loser_of_same_key_race_gets_winners_deposit(self, collide_on_transaction_key):
+        """
+        When two identical keyed requests both pass the replay check before either commits, the loser's insert
+        fails on a unique constraint, and it re-reads and returns the winner's deposit with a 200.
+        """
+        winner_response = self.client.post(self.url, self.request_data)
+        assert winner_response.status_code == status.HTTP_201_CREATED
+
+        original_get_replayed_deposit = DepositAdminCreate._get_replayed_deposit  # pylint: disable=protected-access
+        replay_checks = []
+
+        def miss_first_replay_check(view, validated_data):
+            # Simulate the loser passing the replay check before the winner committed.
+            replay_checks.append(validated_data)
+            if len(replay_checks) == 1:
+                return None
+            return original_get_replayed_deposit(view, validated_data)
+
+        def insert_transaction(ledger, idempotency_key, defaults):
+            return Transaction.objects.create(ledger=ledger, idempotency_key=idempotency_key, **defaults), True
+
+        with mock.patch.object(
+            DepositAdminCreate, '_get_replayed_deposit', autospec=True, side_effect=miss_first_replay_check,
+        ), mock.patch.object(
+            Transaction.objects, 'get_or_create', side_effect=insert_transaction,
+        ) if collide_on_transaction_key else nullcontext():
+            loser_response = self.client.post(self.url, self.request_data)
+
+        assert len(replay_checks) == 2
+        assert loser_response.status_code == status.HTTP_200_OK
+        assert loser_response.data == winner_response.data
+        assert self._keyed_deposits().count() == 1
+
+    def test_unkeyed_duplicate_is_still_rejected(self):
+        """
+        Without a key, a duplicate request is unchanged and returns 422.
+        """
+        unkeyed_request_data = {k: v for k, v in self.request_data.items() if k != 'idempotency_key'}
+        assert self.client.post(self.url, unkeyed_request_data).status_code == status.HTTP_201_CREATED
+
+        response = self.client.post(self.url, unkeyed_request_data)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.data['code'] == ErrorCodes.DEPOSIT_CREATION_ERROR
+
+    def test_keyed_creation_failure_without_existing_deposit_is_rejected(self):
+        """
+        A keyed request that fails for a reason other than a race or the ledger lock still returns 422.
+        """
+        with mock.patch.object(
+            ledger_api, 'create_deposit', side_effect=ledger_api.DepositCreationError('boom'),
+        ):
+            response = self.client.post(self.url, self.request_data)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.data['code'] == ErrorCodes.DEPOSIT_CREATION_ERROR
+
+    def test_non_dict_body_is_rejected(self):
+        """
+        A JSON array body is rejected by the serializer with a 400, not a 500.
+        """
+        response = self.client.post(self.url, [], format='json')
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_replay_with_falsy_key_returns_original_deposit(self):
+        """
+        A key that the serializer accepts but is falsy as sent (JSON 0, normalized to '0') is still treated as keyed.
+        """
+        request_data = {**self.request_data, 'idempotency_key': 0}
+        first_response = self.client.post(self.url, request_data, format='json')
+        assert first_response.status_code == status.HTTP_201_CREATED
+
+        replay_response = self.client.post(self.url, request_data, format='json')
+
+        assert replay_response.status_code == status.HTTP_200_OK
+        assert replay_response.data == first_response.data
+
+    def test_key_used_by_non_deposit_transaction_is_conflict(self):
+        """
+        A key already used by a non-deposit Transaction (e.g. a redemption) returns 409, instead of attaching the new
+        Deposit to that Transaction without crediting the ledger.
+        """
+        Transaction.objects.create(
+            ledger=self.subsidy.ledger,
+            idempotency_key=self.IDEMPOTENCY_KEY,
+            quantity=-500,
+            state=TransactionStateChoices.COMMITTED,
+        )
+        starting_balance = self.subsidy.ledger.balance()
+
+        response = self.client.post(self.url, self.request_data)
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.data['code'] == ErrorCodes.DEPOSIT_IDEMPOTENCY_CONFLICT
+        assert not self._keyed_deposits().exists()
+        assert self.subsidy.ledger.balance() == starting_balance

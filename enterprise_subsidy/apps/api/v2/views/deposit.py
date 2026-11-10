@@ -8,13 +8,14 @@ from django.utils.functional import cached_property
 from drf_spectacular.utils import extend_schema
 from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
-from openedx_ledger.models import Deposit
+from openedx_ledger.models import LedgerLockAttemptFailed, Transaction
 from requests.exceptions import HTTPError
 from rest_framework import generics, permissions, status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.exceptions import APIException, NotFound, PermissionDenied, Throttled
+from rest_framework.response import Response
 
-from enterprise_subsidy.apps.api.exceptions import DepositCreationAPIException, ErrorCodes
+from enterprise_subsidy.apps.api.exceptions import DepositCreationAPIException, ErrorCodes, SubsidyAPIException
 from enterprise_subsidy.apps.api.utils import get_subsidy_customer_uuid_from_view
 from enterprise_subsidy.apps.api.v2.serializers.deposits import (
     DepositCreationError,
@@ -27,6 +28,17 @@ from enterprise_subsidy.apps.subsidy.constants import PERMISSION_CAN_CREATE_DEPO
 logger = logging.getLogger(__name__)
 
 
+def _is_ledger_lock_error(exc):
+    """
+    The ledger-lock error reaches the view wrapped twice (by openedx_ledger and by our serializer), so walk __cause__.
+    """
+    while exc is not None:
+        if isinstance(exc, LedgerLockAttemptFailed):
+            return True
+        exc = exc.__cause__
+    return False
+
+
 class DepositAdminCreate(generics.CreateAPIView):
     """
     A create-only API view for deposits.
@@ -36,10 +48,6 @@ class DepositAdminCreate(generics.CreateAPIView):
     authentication_classes = [JwtAuthentication, SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = DepositCreationRequestSerializer
-
-    def __init__(self, *args, **kwargs):
-        self.extra_context = {}
-        super().__init__(*args, **kwargs)
 
     @property
     def requested_subsidy_uuid(self):
@@ -55,17 +63,6 @@ class DepositAdminCreate(generics.CreateAPIView):
         """
         return get_subsidy_by_uuid(self.requested_subsidy_uuid, should_raise=True)
 
-    def set_created(self, created):
-        """
-        Note: This created context setter/getter framework is really only here for when we eventually make deposit
-        creation actually idempotent, but for now it's just for show because we only ever pass True from the serializer.
-        """
-        self.extra_context['created'] = created
-
-    @property
-    def created(self):
-        return self.extra_context.get('created', True)
-
     @permission_required(PERMISSION_CAN_CREATE_DEPOSITS, fn=get_subsidy_customer_uuid_from_view)
     @extend_schema(
         tags=['deposits'],
@@ -74,6 +71,7 @@ class DepositAdminCreate(generics.CreateAPIView):
             status.HTTP_200_OK: DepositSerializer,
             status.HTTP_201_CREATED: DepositSerializer,
             status.HTTP_403_FORBIDDEN: PermissionDenied,
+            status.HTTP_409_CONFLICT: APIException,
             status.HTTP_429_TOO_MANY_REQUESTS: Throttled,
             status.HTTP_422_UNPROCESSABLE_ENTITY: APIException,
         },
@@ -83,15 +81,72 @@ class DepositAdminCreate(generics.CreateAPIView):
         A create view that is accessible only to operators of the system.
         It creates a new Deposit record.
         """
+        # Leave non-dict bodies (e.g. a JSON array) to the serializer, which rejects them with a 400.
+        idempotency_key = request.data.get('idempotency_key') if isinstance(request.data, dict) else None
+        if idempotency_key is not None:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            # Must run before the expired-subsidy check, so that a replay still succeeds after the subsidy expires.
+            existing_deposit = self._get_replayed_deposit(serializer.validated_data)
+            if existing_deposit:
+                return Response(DepositSerializer(existing_deposit).data, status=status.HTTP_200_OK)
+
         if self.subsidy.expiration_datetime < timezone.now():
             raise DepositCreationAPIException(
                 detail='Cannot create a deposit in an expired subsidy',
                 code=ErrorCodes.DEPOSIT_ON_EXPIRED_SUBSIDY_ERROR,
             )
         try:
-            response = super().create(request, subsidy_uuid)
-            if not self.created:
-                response.status_code = status.HTTP_200_OK
-            return response  # The default create() response status is HTTP_201_CREATED
+            return super().create(request, subsidy_uuid)
         except (HTTPError, DepositCreationError) as exc:
+            if idempotency_key is not None:
+                if _is_ledger_lock_error(exc):
+                    raise SubsidyAPIException(
+                        detail='Attempt to lock the Ledger failed, please try again.',
+                        code=ErrorCodes.LEDGER_LOCK_ERROR,
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    ) from exc
+                # We may have lost a race against a concurrent request with the same key, which committed its deposit
+                # after our replay check above. If so, re-read and return the winner's deposit.
+                existing_deposit = self._get_replayed_deposit(serializer.validated_data)
+                if existing_deposit:
+                    return Response(DepositSerializer(existing_deposit).data, status=status.HTTP_200_OK)
             raise DepositCreationAPIException(detail=str(exc)) from exc
+
+    def _get_replayed_deposit(self, validated_data):
+        """
+        Returns the Deposit for the requested idempotency_key, or None. Raises a 409 if its values differ.
+        """
+        # One query: the Transaction and its Deposit are committed together, so read them from the same snapshot.
+        existing_transaction = Transaction.objects.select_related('deposit').filter(
+            ledger=self.subsidy.ledger,
+            idempotency_key=validated_data['idempotency_key'],
+        ).first()
+        if not existing_transaction:
+            return None
+        existing_deposit = getattr(existing_transaction, 'deposit', None)
+        if not existing_deposit:
+            # openedx-ledger would reuse a non-deposit Transaction with this key (e.g. a redemption) and attach the new
+            # Deposit to it without crediting the ledger.
+            raise DepositCreationAPIException(
+                detail=(
+                    f'idempotency_key {validated_data["idempotency_key"]} is already used by a non-deposit '
+                    'transaction in this subsidy.'
+                ),
+                code=ErrorCodes.DEPOSIT_IDEMPOTENCY_CONFLICT,
+                status_code=status.HTTP_409_CONFLICT,
+            )
+        if (
+            existing_deposit.desired_deposit_quantity != validated_data['desired_deposit_quantity']
+            or existing_deposit.sales_contract_reference_id != validated_data['sales_contract_reference_id']
+            or existing_deposit.sales_contract_reference_provider != validated_data['sales_contract_reference_provider']
+        ):
+            raise DepositCreationAPIException(
+                detail=(
+                    f'A deposit with idempotency_key {validated_data["idempotency_key"]} already exists in this '
+                    'subsidy with a different quantity, sales contract reference ID or provider.'
+                ),
+                code=ErrorCodes.DEPOSIT_IDEMPOTENCY_CONFLICT,
+                status_code=status.HTTP_409_CONFLICT,
+            )
+        return existing_deposit

@@ -7,7 +7,11 @@ import ddt
 from django.test import TestCase
 from openedx_ledger.test_utils.factories import DepositFactory, SalesContractReferenceProviderFactory
 
-from enterprise_subsidy.apps.api.v2.serializers.deposits import DepositCreationRequestSerializer, DepositSerializer
+from enterprise_subsidy.apps.api.v2.serializers.deposits import (
+    RESERVED_DEPOSIT_METADATA_KEYS,
+    DepositCreationRequestSerializer,
+    DepositSerializer
+)
 from enterprise_subsidy.apps.subsidy.tests.factories import SubsidyFactory
 
 
@@ -64,3 +68,32 @@ class TestDepositSerializer(TestCase):
             if set_sales_contract_reference_provider
             else None
         )
+
+
+class TestReservedDepositMetadataKeys(TestCase):
+    """
+    Tests for RESERVED_DEPOSIT_METADATA_KEYS.
+    """
+    def test_reserved_keys_include_known_ledger_parameters(self):
+        """
+        Every named parameter of ``create_deposit()`` and ``create_transaction()`` is reserved. Fails if the set ever
+        comes out empty or partial, e.g. if openedx-ledger wraps these functions in a decorator that hides their
+        parameters. This is a floor, so new ledger parameters don't break it.
+        """
+        expected_minimum_reserved_keys = {
+            'content_key',
+            'content_title',
+            'course_run_start_date',
+            'deposit_uuid',
+            'idempotency_key',
+            'ledger',
+            'lms_user_email',
+            'lms_user_id',
+            'parent_content_key',
+            'quantity',
+            'sales_contract_reference_id',
+            'sales_contract_reference_provider',
+            'state',
+            'subsidy_access_policy_uuid',
+        }
+        assert RESERVED_DEPOSIT_METADATA_KEYS >= expected_minimum_reserved_keys

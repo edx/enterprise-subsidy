@@ -7,7 +7,17 @@ import openedx_ledger.api
 from openedx_ledger.models import Deposit, SalesContractReferenceProvider
 from rest_framework import serializers
 
+from enterprise_subsidy.apps.transaction.utils import reserved_metadata_keys
+
 logger = logging.getLogger(__name__)
+
+
+# Deposit metadata is forwarded as ``**metadata`` to ``openedx_ledger.api.create_deposit()``, which in turn forwards it
+# to ``create_transaction()``, so keys matching a named parameter of either function are rejected.
+RESERVED_DEPOSIT_METADATA_KEYS = reserved_metadata_keys(
+    openedx_ledger.api.create_deposit,
+    openedx_ledger.api.create_transaction,
+)
 
 
 class DepositSerializer(serializers.ModelSerializer):
@@ -59,10 +69,13 @@ class DepositCreationRequestSerializer(serializers.ModelSerializer):
         ),
         required=False,
     )
+    # Not a DictField: on form/multipart input that only reads ``metadata.<key>`` fields and turns a plain
+    # ``metadata=<json string>`` into ``{}``, whereas JSONField parses it.
     metadata = serializers.JSONField(
         help_text=(
             "Any additional metadata that a client may want to associate with the "
-            "related Transaction instance to be created."
+            "related Transaction instance to be created. Must be a JSON object. Keys that clash with ledger "
+            "fields are rejected: " + ", ".join(sorted(RESERVED_DEPOSIT_METADATA_KEYS)) + "."
         ),
         allow_null=True,
         required=False,
@@ -90,6 +103,23 @@ class DepositCreationRequestSerializer(serializers.ModelSerializer):
             'idempotency_key': {'required': False},
             'metadata': {'required': False},
         }
+
+    def validate_metadata(self, value):
+        """
+        Ensures metadata is a JSON object whose keys do not clash with openedx-ledger function parameters.
+        """
+        if value is None:
+            return value
+        if not isinstance(value, dict):
+            raise serializers.ValidationError(
+                f'Expected a JSON object but got type "{type(value).__name__}".', code='not_a_dict'
+            )
+        clashing_keys = sorted(set(value) & RESERVED_DEPOSIT_METADATA_KEYS)
+        if clashing_keys:
+            raise serializers.ValidationError(
+                'metadata contains reserved key(s) that clash with ledger fields: ' + ', '.join(clashing_keys)
+            )
+        return value
 
     def to_representation(self, instance):
         """
@@ -145,5 +175,4 @@ class DepositCreationRequestSerializer(serializers.ModelSerializer):
             )
             raise DepositCreationError('Deposit was None after attempting to redeem')
 
-        self.calling_view.set_created(True)
         return deposit
