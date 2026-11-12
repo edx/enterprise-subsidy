@@ -34,3 +34,43 @@ together fund one enrollment, without changing openedx-ledger.
 - **`makemigrations` generates unrelated drift.** On `main` it also writes an `openedx_ledger` migration into
   site-packages, from drift in the installed openedx-ledger. Don't commit it. The split migration depends on
   `openedx_ledger.0016_mariadb_uuid_conversion`.
+
+## Reconciliation (`reconcile_split_enrollments`)
+**ENT-12420.** A management command that finds split enrollments needing attention and logs what reconciliation would
+do with each. Phase 1a only reports: `--fix` raises unless `ENABLE_SPLIT_RECONCILIATION_FIX` is set, and its rules
+aren't implemented yet. The logic lives in `apps/transaction/reconciliation.py`, so the `--fix` work can reuse it.
+
+```
+./manage.py reconcile_split_enrollments [--record <uuid>] [--max-records 200]
+```
+
+It selects, in this order (the duplicate check runs first so a backlog of stale records under `--max-records` can't
+hide its P1 alert; once the cap is hit, no new records are added, but records already selected still collect every
+rule they match):
+
+| Rule | Selects | Age measured from |
+|---|---|---|
+| `duplicate_live_redemption` | **live** records from the last 7 days whose enrollment has another live ledger transaction in any of the customer's ledgers. Logged as `[P1] SPLIT_RECONCILIATION_DUPLICATE_LIVE_REDEMPTION`. A failed or reversed split doesn't count: a later redemption of its enrollment is the expected retry. | `created` |
+| `stale_pending` | `pending` records older than 10 minutes (a request owns one for at most the 300 s worker timeout) | `created` |
+| `stale_reversing` | `reversing` records older than 15 minutes (a refund cascade step failed) | `modified`, the time it entered `reversing` (`transition_to()` updates it) |
+
+For each record it logs the state, `age` (since `created`), `in_state` (since `modified`), rules, the legs found and
+how (leg row, or the ledger idempotency key `split-<record uuid>-<leg_order>` when the leg row is missing), the
+action, and evidence. `--record <uuid>` for a record that matches no rule logs its state and ages instead. A dry run
+changes nothing, so when `--max-records` is hit the same records come first on the next run. A pending record's
+action:
+
+| Legs found | Action |
+|---|---|
+| none, or any `created` (and none `committed`) | `fail_all_legs` (legs move to pending only after every leg exists, so the enroll was never attempted) |
+| all `pending`, no `fulfillment_identifier` | `resend_enroll_to_learn_fulfillment` |
+| all `pending`, `fulfillment_identifier` set | `verify_fulfillment_then_commit` (the edx-enterprise lookup is part of `--fix`) |
+| some or all `committed`, the rest `pending` | `commit_remaining_legs` |
+| a leg missing next to pending or committed ones, `committed` next to `created`, a reversed leg, or anything else | `manual_review` (a missing leg there likely exists but wasn't found, so it's unknown whether the enroll happened; a committed leg means the enroll happened, so failing the others would lose credit) |
+
+A `reversing` record's action is `reverse_remaining_legs`. Each run logs counts per rule and per action, and exits
+non-zero if any record errored. It never writes and never calls `create_transaction()`: the ledger checks the balance
+before its idempotency lookup, so re-creating a leg that drained its ledger would raise instead of returning the leg.
+
+**Gotcha:** the split redemption must create each leg's transaction with `split_leg_idempotency_key()` from
+`reconciliation.py`, or reconciliation can't find legs whose rows were never written.
