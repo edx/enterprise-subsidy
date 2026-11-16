@@ -4,7 +4,7 @@ V2 Serializers for the enterprise-subsidy API.
 import logging
 
 import openedx_ledger.api
-from openedx_ledger.models import Deposit, SalesContractReferenceProvider
+from openedx_ledger.models import Deposit, LedgerLockAttemptFailed, SalesContractReferenceProvider
 from rest_framework import serializers
 
 from enterprise_subsidy.apps.transaction.utils import reserved_metadata_keys
@@ -144,6 +144,8 @@ class DepositCreationRequestSerializer(serializers.ModelSerializer):
         Desposit is returned.
 
         Raises:
+          openedx_ledger.models.LedgerLockAttemptFailed:
+              Another process holds the ledger lock; the caller may retry.
           enterprise_subsidy.apps.api.v2.serializers.deposits.DepositCreationError:
               Catch-all exception for when any other problem occurs during deposit creation. One possibility is that the
               caller attempted to create the same deposit twice.
@@ -161,6 +163,9 @@ class DepositCreationRequestSerializer(serializers.ModelSerializer):
                 **(validated_data.get('metadata') or {}),
             )
         except openedx_ledger.api.DepositCreationError as exc:
+            if isinstance(exc.__cause__, LedgerLockAttemptFailed):
+                # Let the view map a locked ledger to a retryable 429, rather than a generic creation failure.
+                raise exc.__cause__ from exc
             logger.error(
                 'Encountered DepositCreationError while creating Deposit in subsidy %s using values %s',
                 subsidy.uuid,
