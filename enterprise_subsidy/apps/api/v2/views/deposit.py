@@ -119,7 +119,8 @@ class DepositAdminCreate(generics.CreateAPIView):
                 existing_deposit = self._get_replayed_deposit(validated_data)
                 if existing_deposit:
                     return Response(DepositSerializer(existing_deposit).data, status=status.HTTP_200_OK)
-            raise DepositCreationAPIException(detail=str(exc)) from exc
+            # Return the generic default_detail: exc's message can carry ledger/DB internals. The serializer logs it.
+            raise DepositCreationAPIException() from exc
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 

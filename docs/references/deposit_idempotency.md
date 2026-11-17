@@ -54,3 +54,6 @@ body.
   `DepositCreationError` on a keyed request, it re-reads the deposit for the key and returns it (or 409s if it
   differs). If no deposit is found, the 422 stands.
 - The re-read relies on `ATOMIC_REQUESTS` being off, so the loser's read is not pinned to a pre-race MySQL snapshot.
+- **The 422 `deposit_creation_error` body is always the generic `"Error creating deposit."`.** The underlying
+  `DepositCreationError` message can carry ledger/database internals, so the view never echoes `str(exc)` (CodeQL
+  "information exposure through an exception"); the serializer logs it with `logger.exception` instead.

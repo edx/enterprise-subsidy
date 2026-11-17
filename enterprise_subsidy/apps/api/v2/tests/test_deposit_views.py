@@ -673,12 +673,15 @@ class KeyedDepositCreateViewTests(APITestMixin):
         A keyed request that fails for a reason other than a race or the ledger lock still returns 422.
         """
         with mock.patch.object(
-            ledger_api, 'create_deposit', side_effect=ledger_api.DepositCreationError('boom'),
+            ledger_api, 'create_deposit', side_effect=ledger_api.DepositCreationError('internal ledger detail'),
         ):
             response = self.client.post(self.url, self.request_data)
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         assert response.data['code'] == ErrorCodes.DEPOSIT_CREATION_ERROR
+        # The internal exception message is logged, not exposed to the caller.
+        assert response.data['detail'] == 'Error creating deposit.'
+        assert 'internal ledger detail' not in str(response.data)
 
     def test_non_dict_body_is_rejected(self):
         """
