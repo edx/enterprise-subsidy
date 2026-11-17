@@ -1,10 +1,13 @@
 """
 Tests for the serializers in the API.
 """
+from unittest import mock
 from uuid import uuid4
 
 import ddt
+import pytest
 from django.test import TestCase
+from openedx_ledger.models import LedgerLockAttemptFailed
 from openedx_ledger.test_utils.factories import DepositFactory, SalesContractReferenceProviderFactory
 
 from enterprise_subsidy.apps.api.v2.serializers.deposits import (
@@ -68,6 +71,40 @@ class TestDepositSerializer(TestCase):
             if set_sales_contract_reference_provider
             else None
         )
+
+
+class TestDepositCreationRequestSerializerCreate(TestCase):
+    """
+    Tests for DepositCreationRequestSerializer.create().
+    """
+    def test_locked_ledger_raises_lock_error_with_finite_cause_chain(self):
+        """
+        A locked ledger surfaces as LedgerLockAttemptFailed, and its ``__cause__`` chain ends. Re-raising the ledger's
+        original lock error would loop the chain (lock error -> DepositCreationError -> same lock error), which hangs
+        any ``while exc: exc = exc.__cause__`` walk.
+        """
+        subsidy = SubsidyFactory()
+        provider = SalesContractReferenceProviderFactory()
+        serializer = DepositCreationRequestSerializer(context={'view': mock.Mock(subsidy=subsidy)})
+        validated_data = {
+            'desired_deposit_quantity': 100,
+            'sales_contract_reference_id': str(uuid4()),
+            'sales_contract_reference_provider': provider,
+        }
+
+        assert subsidy.ledger.acquire_lock()
+        try:
+            with pytest.raises(LedgerLockAttemptFailed) as exc_info:
+                serializer.create(validated_data)
+        finally:
+            subsidy.ledger.release_lock()
+
+        seen = set()
+        exc = exc_info.value
+        while exc is not None:
+            assert id(exc) not in seen, 'exception __cause__ chain contains a cycle'
+            seen.add(id(exc))
+            exc = exc.__cause__
 
 
 class TestReservedDepositMetadataKeys(TestCase):

@@ -9,7 +9,6 @@ from drf_spectacular.utils import extend_schema
 from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from openedx_ledger.models import LedgerLockAttemptFailed, Transaction
-from requests.exceptions import HTTPError
 from rest_framework import generics, permissions, status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.exceptions import APIException, NotFound, PermissionDenied, Throttled, ValidationError
@@ -113,8 +112,8 @@ class DepositAdminCreate(generics.CreateAPIView):
                 detail='Attempt to lock the Ledger failed, please try again.',
                 code=ErrorCodes.LEDGER_LOCK_ERROR,
             ) from exc
-        except (HTTPError, DepositCreationError) as exc:
-            if idempotency_key is not None and isinstance(exc, DepositCreationError):
+        except DepositCreationError as exc:
+            if idempotency_key is not None:
                 # We may have lost a race against a concurrent request with the same key, which committed its deposit
                 # after our replay check above. If so, re-read and return the winner's deposit (or a 409).
                 existing_deposit = self._get_replayed_deposit(validated_data)

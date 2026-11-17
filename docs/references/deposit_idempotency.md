@@ -41,7 +41,9 @@ body.
   `CreateAPIView.create()`, which would validate a second time.
 - **openedx-ledger wraps the lock error.** `openedx_ledger.api.create_deposit()` wraps every failure (including
   `LedgerLockAttemptFailed`) in `openedx_ledger.api.DepositCreationError`. The v2 serializer checks `__cause__` and
-  re-raises the original `LedgerLockAttemptFailed`, so the view can catch it directly, as the v2 transaction view does.
+  raises a new `LedgerLockAttemptFailed` (same message, chained `from` the ledger's error), so the view can catch it
+  directly, as the v2 transaction view does. Don't re-raise `exc.__cause__ from exc`: that makes the `__cause__` chain
+  loop back on itself, so any `while exc: exc = exc.__cause__` walk never ends.
 - **The deleted-subsidy 404 comes from the `subsidy` property.** The rbac permission check loads the subsidy separately
   (`api/utils.get_subsidy_customer_uuid_from_view`), so a soft-delete between that check and the view would otherwise
   surface as an uncaught `Subsidy.DoesNotExist` (500).
