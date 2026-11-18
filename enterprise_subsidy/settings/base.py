@@ -432,4 +432,8 @@ EVENT_BUS_PRODUCER_CONFIG = {
 # writing of a reversal on learner-initiated unenrollment.
 ENABLE_HANDLE_LC_ENROLLMENT_REVOKED = False
 
+# Allow reconcile_split_enrollments --fix to act on split enrollments. Off until the --fix rules ship; without it the
+# command only reports.
+ENABLE_SPLIT_RECONCILIATION_FIX = False
+
 # END FEATURE FLAGS CONFIGURATION
