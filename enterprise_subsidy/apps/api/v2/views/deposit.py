@@ -82,7 +82,9 @@ class DepositAdminCreate(generics.CreateAPIView):
           200: a deposit with the requested ``idempotency_key`` already exists with the same quantity, sales contract
                reference ID and provider; it is returned unchanged.
           400: the request is invalid (checked first, even on an expired subsidy).
-          404: the subsidy no longer exists.
+          403: the caller lacks operator access, or the subsidy does not exist (including soft-deleted) when the request
+               arrives: the rbac check gets no enterprise customer to authorize against.
+          404: the subsidy was soft-deleted after the permission check passed (a race).
           409: the ``idempotency_key`` is already used with different values, or by a non-deposit transaction.
           422: the subsidy has expired, or the deposit could not be created (including an unkeyed duplicate).
           429: another request holds the ledger lock; retry later.

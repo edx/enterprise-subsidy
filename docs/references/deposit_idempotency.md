@@ -20,7 +20,8 @@ then create.
 | Situation (any request, with or without a key)                      | Response                              |
 |---------------------------------------------------------------------|---------------------------------------|
 | Request fails validation (even on an expired subsidy)               | 400 with field errors                 |
-| Subsidy soft-deleted after the permission check                     | 404, message names the subsidy        |
+| Subsidy missing or already soft-deleted when the request arrives    | 403 (from the rbac permission check)  |
+| Subsidy soft-deleted after the permission check (a race)            | 404, message names the subsidy        |
 | Ledger lock held by another request                                 | 429, DRF `Throttled`, code `ledger_lock_error` (retryable) |
 | New deposit on an expired subsidy                                   | 422 `deposit_on_expired_subsidy`      |
 
@@ -42,8 +43,11 @@ body.
 - **openedx-ledger wraps the lock error.** `openedx_ledger.api.create_deposit()` wraps every failure (including
   `LedgerLockAttemptFailed`) in `openedx_ledger.api.DepositCreationError`. The v2 serializer checks `__cause__` and
   raises a new `LedgerLockAttemptFailed` (same message, chained `from` the ledger's error), so the view can catch it
-  directly, as the v2 transaction view does. Don't re-raise `exc.__cause__ from exc`: that makes the `__cause__` chain
-  loop back on itself, so any `while exc: exc = exc.__cause__` walk never ends.
+  directly, as the v2 transaction view does.
+- **A subsidy that is already gone is a 403, not a 404.** `get_subsidy_customer_uuid_from_view` returns None for a
+  missing or soft-deleted subsidy (`Subsidy.objects` hides soft-deleted rows), and every rbac predicate in
+  `subsidy/rules.py` returns False for an empty context, even for a wildcard operator. Callers should treat 403 and 404
+  alike as permanent "subsidy unavailable" failures.
 - **The deleted-subsidy 404 comes from the `subsidy` property.** The rbac permission check loads the subsidy separately
   (`api/utils.get_subsidy_customer_uuid_from_view`), so a soft-delete between that check and the view would otherwise
   surface as an uncaught `Subsidy.DoesNotExist` (500).
@@ -56,4 +60,5 @@ body.
 - The re-read relies on `ATOMIC_REQUESTS` being off, so the loser's read is not pinned to a pre-race MySQL snapshot.
 - **The 422 `deposit_creation_error` body is always the generic `"Error creating deposit."`.** The underlying
   `DepositCreationError` message can carry ledger/database internals, so the view never echoes `str(exc)` (CodeQL
-  "information exposure through an exception"); the serializer logs it with `logger.exception` instead.
+  "information exposure through an exception"); it stays in the logs instead: openedx-ledger logs the traceback, and the serializer logs the message with the subsidy
+  and request values.

@@ -577,6 +577,25 @@ class KeyedDepositCreateViewTests(APITestMixin):
         assert Deposit.objects.count() == deposit_count
         assert Transaction.objects.count() == transaction_count
 
+    @ddt.data(True, False)
+    def test_subsidy_already_deleted_is_forbidden(self, send_idempotency_key):
+        """
+        A subsidy soft-deleted before the request arrives fails the rbac permission check, which finds no enterprise
+        customer for it, so the caller gets 403 (not 404) and nothing is created.
+        """
+        request_data = dict(self.request_data)
+        if not send_idempotency_key:
+            del request_data['idempotency_key']
+        self.subsidy.delete()  # Subsidy.delete() is a soft delete.
+        deposit_count = Deposit.objects.count()
+        transaction_count = Transaction.objects.count()
+
+        response = self.client.post(self.url, request_data)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert Deposit.objects.count() == deposit_count
+        assert Transaction.objects.count() == transaction_count
+
     @ddt.data(
         # Missing quantity.
         {"field": "desired_deposit_quantity", "value": None, "send_idempotency_key": True},

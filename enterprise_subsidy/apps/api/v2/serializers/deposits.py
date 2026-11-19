@@ -167,10 +167,12 @@ class DepositCreationRequestSerializer(serializers.ModelSerializer):
                 # Let the view map a locked ledger to a retryable 429, rather than a generic creation failure.
                 # Raise a fresh exception: re-raising exc.__cause__ from exc would make the __cause__ chain a cycle.
                 raise LedgerLockAttemptFailed(str(exc.__cause__)) from exc
-            logger.exception(
-                'Encountered DepositCreationError while creating Deposit in subsidy %s using values %s',
+            # openedx-ledger already logged the traceback; add our context without logging it again.
+            logger.error(
+                'Encountered DepositCreationError while creating Deposit in subsidy %s using values %s: %s',
                 subsidy.uuid,
                 validated_data,
+                exc,
             )
             raise DepositCreationError(str(exc)) from exc
         if not deposit:
