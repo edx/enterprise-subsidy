@@ -16,6 +16,7 @@ from rest_framework.reverse import reverse
 from enterprise_subsidy.apps.api.exceptions import ErrorCodes
 from enterprise_subsidy.apps.api.v1.tests.mixins import STATIC_ENTERPRISE_UUID, APITestMixin
 from enterprise_subsidy.apps.api.v2.views.deposit import DepositAdminCreate
+from enterprise_subsidy.apps.subsidy.api import get_subsidy_by_uuid
 from enterprise_subsidy.apps.subsidy.constants import STRIPE_PAYMENT_INTENT_REFERENCE_PROVIDER_SLUG
 from enterprise_subsidy.apps.subsidy.models import SubsidyReferenceChoices
 from enterprise_subsidy.apps.subsidy.tests.factories import SubsidyFactory
@@ -419,7 +420,8 @@ class DepositCreateViewTests(APITestMixin):
 @ddt.ddt
 class KeyedDepositCreateViewTests(APITestMixin):
     """
-    Test that deposit requests carrying an idempotency_key are safe to retry.
+    Test that deposit requests carrying an idempotency_key are safe to retry, and that every deposit request, keyed
+    or not, maps a locked ledger to 429, a deleted subsidy to 404 and a validation error to 400.
     """
     IDEMPOTENCY_KEY = 'K'
 
@@ -522,23 +524,115 @@ class KeyedDepositCreateViewTests(APITestMixin):
         assert Deposit.objects.count() == deposit_count
         assert Transaction.objects.count() == transaction_count
 
-    def test_ledger_lock_contention_is_retryable(self):
+    @ddt.data(True, False)
+    def test_ledger_lock_contention_is_retryable(self, send_idempotency_key):
         """
-        A keyed request against a locked ledger returns 429, and succeeds once the lock is released.
+        A request against a locked ledger returns 429 whether or not it has a key, and succeeds once the lock is
+        released.
         """
+        request_data = dict(self.request_data)
+        if not send_idempotency_key:
+            del request_data['idempotency_key']
+        deposit_count = Deposit.objects.count()
+
         assert self.subsidy.ledger.acquire_lock()
         try:
-            locked_response = self.client.post(self.url, self.request_data)
+            locked_response = self.client.post(self.url, request_data)
         finally:
             self.subsidy.ledger.release_lock()
 
         assert locked_response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
-        assert locked_response.data['code'] == ErrorCodes.LEDGER_LOCK_ERROR
-        assert not self._keyed_deposits().exists()
+        assert locked_response.data == {'detail': 'Attempt to lock the Ledger failed, please try again.'}
+        assert locked_response.data['detail'].code == ErrorCodes.LEDGER_LOCK_ERROR
+        assert Deposit.objects.count() == deposit_count
 
-        retry_response = self.client.post(self.url, self.request_data)
+        retry_response = self.client.post(self.url, request_data)
         assert retry_response.status_code == status.HTTP_201_CREATED
-        assert self._keyed_deposits().count() == 1
+        assert Deposit.objects.count() == deposit_count + 1
+
+    @ddt.data(True, False)
+    def test_subsidy_deleted_during_request_is_not_found(self, send_idempotency_key):
+        """
+        A subsidy soft-deleted after the permission check but before the view loads it returns 404 naming the subsidy,
+        not a 500, and creates nothing.
+        """
+        request_data = dict(self.request_data)
+        if not send_idempotency_key:
+            del request_data['idempotency_key']
+        deposit_count = Deposit.objects.count()
+        transaction_count = Transaction.objects.count()
+
+        def soft_delete_then_load(subsidy_uuid, should_raise=False):
+            # The permission check has already loaded the subsidy through api.utils, which this patch doesn't touch.
+            self.subsidy.delete()  # Subsidy.delete() is a soft delete.
+            return get_subsidy_by_uuid(subsidy_uuid, should_raise=should_raise)
+
+        with mock.patch(
+            'enterprise_subsidy.apps.api.v2.views.deposit.get_subsidy_by_uuid', side_effect=soft_delete_then_load,
+        ):
+            response = self.client.post(self.url, request_data)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert str(self.subsidy.uuid) in response.data['detail']
+        assert Deposit.objects.count() == deposit_count
+        assert Transaction.objects.count() == transaction_count
+
+    @ddt.data(True, False)
+    def test_subsidy_already_deleted_is_forbidden(self, send_idempotency_key):
+        """
+        A subsidy soft-deleted before the request arrives fails the rbac permission check, which finds no enterprise
+        customer for it, so the caller gets 403 (not 404) and nothing is created.
+        """
+        request_data = dict(self.request_data)
+        if not send_idempotency_key:
+            del request_data['idempotency_key']
+        self.subsidy.delete()  # Subsidy.delete() is a soft delete.
+        deposit_count = Deposit.objects.count()
+        transaction_count = Transaction.objects.count()
+
+        response = self.client.post(self.url, request_data)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert Deposit.objects.count() == deposit_count
+        assert Transaction.objects.count() == transaction_count
+
+    @ddt.data(
+        # Missing quantity.
+        {"field": "desired_deposit_quantity", "value": None, "send_idempotency_key": True},
+        {"field": "desired_deposit_quantity", "value": None, "send_idempotency_key": False},
+        # Zero quantity.
+        {"field": "desired_deposit_quantity", "value": 0, "send_idempotency_key": True},
+        {"field": "desired_deposit_quantity", "value": 0, "send_idempotency_key": False},
+        # Unknown provider.
+        {"field": "sales_contract_reference_provider", "value": "totally-invalid-slug", "send_idempotency_key": True},
+        {"field": "sales_contract_reference_provider", "value": "totally-invalid-slug", "send_idempotency_key": False},
+    )
+    @ddt.unpack
+    def test_invalid_request_to_expired_subsidy_is_bad_request(self, field, value, send_idempotency_key):
+        """
+        Validation runs before the expired-subsidy check, so an invalid request is a 400 naming the field even when
+        the subsidy has expired, with or without a key, and nothing is created.
+        """
+        self.subsidy.active_datetime = timezone.now() - timedelta(days=3)
+        self.subsidy.expiration_datetime = timezone.now() - timedelta(days=1)
+        self.subsidy.save()
+        request_data = dict(self.request_data)
+        if not send_idempotency_key:
+            del request_data['idempotency_key']
+        if value is None:
+            del request_data[field]
+        else:
+            request_data[field] = value
+        deposit_count = Deposit.objects.count()
+        transaction_count = Transaction.objects.count()
+
+        response = self.client.post(self.url, request_data)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert list(response.data) == [field]
+        assert response.data[field][0]
+        assert Deposit.objects.count() == deposit_count
+        assert Transaction.objects.count() == transaction_count
 
     @ddt.data(
         # The winner committed after our get_or_create() looked for its Transaction, so our Transaction insert hits
@@ -598,12 +692,15 @@ class KeyedDepositCreateViewTests(APITestMixin):
         A keyed request that fails for a reason other than a race or the ledger lock still returns 422.
         """
         with mock.patch.object(
-            ledger_api, 'create_deposit', side_effect=ledger_api.DepositCreationError('boom'),
+            ledger_api, 'create_deposit', side_effect=ledger_api.DepositCreationError('internal ledger detail'),
         ):
             response = self.client.post(self.url, self.request_data)
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         assert response.data['code'] == ErrorCodes.DEPOSIT_CREATION_ERROR
+        # The internal exception message is logged, not exposed to the caller.
+        assert response.data['detail'] == 'Error creating deposit.'
+        assert 'internal ledger detail' not in str(response.data)
 
     def test_non_dict_body_is_rejected(self):
         """
