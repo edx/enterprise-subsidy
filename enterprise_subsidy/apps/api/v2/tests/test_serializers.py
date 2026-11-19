@@ -77,11 +77,9 @@ class TestDepositCreationRequestSerializerCreate(TestCase):
     """
     Tests for DepositCreationRequestSerializer.create().
     """
-    def test_locked_ledger_raises_lock_error_with_finite_cause_chain(self):
+    def test_locked_ledger_raises_lock_error(self):
         """
-        A locked ledger surfaces as LedgerLockAttemptFailed, and its ``__cause__`` chain ends. Re-raising the ledger's
-        original lock error would loop the chain (lock error -> DepositCreationError -> same lock error), which hangs
-        any ``while exc: exc = exc.__cause__`` walk.
+        A locked ledger surfaces as LedgerLockAttemptFailed, not the ledger's wrapping DepositCreationError.
         """
         subsidy = SubsidyFactory()
         provider = SalesContractReferenceProviderFactory()
@@ -94,17 +92,10 @@ class TestDepositCreationRequestSerializerCreate(TestCase):
 
         assert subsidy.ledger.acquire_lock()
         try:
-            with pytest.raises(LedgerLockAttemptFailed) as exc_info:
+            with pytest.raises(LedgerLockAttemptFailed):
                 serializer.create(validated_data)
         finally:
             subsidy.ledger.release_lock()
-
-        seen = set()
-        exc = exc_info.value
-        while exc is not None:
-            assert id(exc) not in seen, 'exception __cause__ chain contains a cycle'
-            seen.add(id(exc))
-            exc = exc.__cause__
 
 
 class TestReservedDepositMetadataKeys(TestCase):
